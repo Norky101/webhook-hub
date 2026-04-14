@@ -144,6 +144,24 @@ No single tool sees these patterns. HubSpot doesn't know about Stripe. PagerDuty
 
 This is the path from "webhook monitoring tool" to "business operations automation platform."
 
+## 18. Notification sync: all channels receive the same alerts
+
+**Considered:** Independent rules per channel (email gets critical only, Slack gets everything), or synced notification policies where all active channels receive the same alerts
+**Chose:** Synced by design — all forwarding rules for a tenant should use the same severity and provider filters
+**Why:** If a PagerDuty incident is worth sending to Slack, it's worth sending to email. Split policies create confusion: "I saw it in Slack but didn't get the email" or "Why did email fire but not Slack?" Ops teams need one source of truth for what counts as an alert, not per-channel configuration.
+
+**Current implementation:** Each forwarding rule has its own filters. Rules are created with matching filters to keep channels synced. Future improvement: a `notification_policies` table that defines the filters once, and forwarding rules reference the policy instead of duplicating filters.
+
+**Remediation playbooks sync automatically:** Playbooks are matched against the event, not the channel. If a playbook matches, the steps appear in every notification — Slack, email, and webhook. This is correct by design: if someone gets an alert, they should always get the remediation steps with it.
+
+## 19. Remediation playbooks: don't just alert, help fix
+
+**Considered:** Alerts only (tell people something happened), automated actions (call APIs to fix it), or playbooks (tell people what to do)
+**Chose:** Playbooks first — structured remediation steps attached to event patterns, included in all notifications
+**Why:** Automated actions are powerful but dangerous without guardrails — you don't want an auto-rollback firing on a false positive. Playbooks are the safe middle ground: the system tells you what happened AND what to do about it. The human decides whether to act. This is the right default for v1. Automated actions come later once the playbooks have been validated by real usage.
+
+**Pattern matching:** Supports exact match (`incident.triggered`), wildcard (`*` matches everything), and prefix match (`incident.*` matches all incident subtypes). This means one playbook can cover an entire category of events without needing a rule per event type.
+
 ---
 
 ## The Thinking Behind The Build
