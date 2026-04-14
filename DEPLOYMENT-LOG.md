@@ -137,6 +137,14 @@ Claude Code (CLI) — Claude Opus, max effort. Used for architecture, code gener
 - Pattern matching supports exact, wildcard (*), and prefix (incident.*)
 - **Commit:** `Phase 12: remediation playbooks`
 
+### Session 14 — Provider Health Scores (17:05–17:15)
+- Per-provider success/error rates calculated from events table (last 1hr window)
+- Dashboard: health score cards with color-coded status (green/yellow/red)
+- Shows success rate %, processed/failed counts, and status per provider
+- API: GET /api/health/providers?tenant_id=X&window=60
+- Overall status: healthy/degraded/critical based on worst provider
+- **Commit:** `Phase 13: provider health scores`
+
 ---
 
 ## Process Notes

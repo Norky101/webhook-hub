@@ -166,6 +166,15 @@ export function dashboardHTML(): string {
     </div>
   </div>
 
+  <div class="section">
+    <h2 class="collapsible" onclick="toggleSection('health')"><span class="arrow open" id="arrow-health">&#9654;</span> Provider Health</h2>
+    <div class="collapsible-content" id="section-health">
+      <div id="health-scores" style="display:flex; gap:12px; flex-wrap:wrap;">
+        <div class="empty">Loading health scores...</div>
+      </div>
+    </div>
+  </div>
+
   <div class="filters" style="display:flex; gap:10px; align-items:center; margin-bottom:20px; flex-wrap:wrap;">
     <input type="text" id="search-input" placeholder="Search events — type a keyword, event ID, or provider..." style="flex:1; min-width:200px; background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:8px 12px; border-radius:6px; font-size:13px;">
     <select id="filter-provider" style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:8px 12px; border-radius:6px; font-size:13px;">
@@ -382,6 +391,28 @@ async function loadDashboard() {
     // Provider chart — store data for chart toggle
     lastProviderData = stats.by_provider || [];
     renderProviderChart();
+
+    // Provider health scores
+    try {
+      const healthData = await api('/api/health/providers?tenant_id=' + tenant);
+      const container = document.getElementById('health-scores');
+      const providers = healthData.providers || [];
+      if (providers.length === 0) {
+        container.innerHTML = '<div class="empty">No provider data in the last hour</div>';
+      } else {
+        container.innerHTML = providers.map(p => {
+          const color = p.status === 'healthy' ? '#3fb950' : p.status === 'degraded' ? '#d29922' : p.status === 'critical' ? '#f85149' : '#484f58';
+          const bg = p.status === 'healthy' ? '#0d3321' : p.status === 'degraded' ? '#3d2e00' : p.status === 'critical' ? '#3d1418' : '#161b22';
+          const provColor = PROVIDER_COLORS[p.provider] || '#8b949e';
+          return '<div style="background:' + bg + ';border:1px solid ' + color + ';border-radius:8px;padding:14px 18px;min-width:140px;">'
+            + '<div style="font-size:12px;color:' + provColor + ';font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">' + p.provider + '</div>'
+            + '<div style="font-size:28px;font-weight:700;color:' + color + ';margin:4px 0;">' + p.success_rate + '%</div>'
+            + '<div style="font-size:11px;color:#8b949e;">' + p.processed + ' ok / ' + p.failed + ' failed</div>'
+            + '<div style="font-size:11px;color:' + color + ';margin-top:2px;">' + p.status + '</div>'
+            + '</div>';
+        }).join('');
+      }
+    } catch (e) { /* health scores optional */ }
 
     // Events table — apply client-side search + severity filter
     const eventsTable = document.getElementById('events-table');

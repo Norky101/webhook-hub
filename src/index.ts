@@ -5,6 +5,7 @@ import { generateEventId, nowISO } from "./utils";
 import { processRetryQueue, queueForRetry } from "./retry";
 import { forwardEvent } from "./forwarding";
 import { dashboardHTML } from "./dashboard";
+import { getProviderHealthScores } from "./health-scores";
 import { generateWebhook, simulatorProviders } from "./simulator";
 
 /** Env bindings for Cloudflare Workers */
@@ -404,6 +405,26 @@ app.delete("/api/forwarding/:id", async (c) => {
   const { id } = c.req.param();
   await c.env.DB.prepare("DELETE FROM forwarding_rules WHERE id = ?").bind(id).run();
   return c.json({ status: "deleted" });
+});
+
+// ─── Provider Health Scores ─────────────────────────────
+
+app.get("/api/health/providers", async (c) => {
+  const tenant_id = c.req.query("tenant_id");
+  if (!tenant_id) return c.json({ error: "tenant_id is required" }, 400);
+  const window = parseInt(c.req.query("window") || "60");
+
+  const scores = await getProviderHealthScores(c.env.DB, tenant_id, window);
+  return c.json({
+    tenant_id,
+    window_minutes: window,
+    providers: scores,
+    overall_status: scores.some((s) => s.status === "critical")
+      ? "critical"
+      : scores.some((s) => s.status === "degraded")
+        ? "degraded"
+        : "healthy",
+  });
 });
 
 // ─── Remediation Playbooks API ──────────────────────────

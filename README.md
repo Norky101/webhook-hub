@@ -262,6 +262,27 @@ Response:
 
 ---
 
+**`GET /api/health/providers?tenant_id=X`** — Provider health scores
+
+```bash
+curl "https://webhook-hub.noahpilkington98.workers.dev/api/health/providers?tenant_id=acme_corp&window=60"
+```
+
+Response:
+```json
+{
+  "tenant_id": "acme_corp",
+  "window_minutes": 60,
+  "providers": [
+    { "provider": "hubspot", "total": 50, "processed": 49, "failed": 1, "success_rate": 98, "status": "healthy" },
+    { "provider": "pagerduty", "total": 10, "processed": 6, "failed": 4, "success_rate": 60, "status": "degraded" }
+  ],
+  "overall_status": "degraded"
+}
+```
+
+---
+
 **`GET /api/retries?tenant_id=X`** — View retry queue
 
 **`GET /api/dead-letter?tenant_id=X`** — View dead letter queue
