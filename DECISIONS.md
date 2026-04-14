@@ -105,7 +105,21 @@ Every meaningful decision made during the build — what I considered, what I ch
 
 **Why Slack needs its own formatter:** Slack incoming webhooks accept JSON but the default format looks terrible. We auto-detect Slack URLs and send rich Block Kit messages with severity emoji, structured fields, and a dashboard link. This makes the Slack channel actually usable as an ops feed, not just a wall of JSON.
 
-### 14. Notification sync: all channels receive the same alerts
+### 14. SMS and voice call alerts via Twilio — severity demands urgency
+
+**Considered:** Email and Slack only, third-party alerting service (PagerDuty/OpsGenie), or building SMS/call directly with Twilio
+**Chose:** Twilio SMS + voice call as forwarding destinations, integrated into the same forwarding engine
+**Why:** Email sits in an inbox. Slack gets buried in channels. When a production database goes down at 3am, you need a phone ringing on someone's nightstand. SMS and voice calls are the only channels that reliably wake people up.
+
+**SMS:** Sends a concise text message — event severity, provider, event type, summary, plus the first 3 remediation steps from any matching playbook. Designed to be actionable from a phone screen without opening a laptop.
+
+**Voice call:** Phone rings. An AI voice (Twilio TwiML) reads the alert summary twice — once to wake you up, once so you can actually process it. Includes provider, severity, event type, and summary. Then directs you to the dashboard for details.
+
+**Why not a third-party alerting service:** Adding PagerDuty or OpsGenie as a dependency means another account, another bill, another integration. Twilio is a raw API — we control the message format, delivery logic, and escalation. And webhook-hub already receives PagerDuty webhooks as a provider, so using PagerDuty for alerting would be circular.
+
+**Credentials:** Twilio Account SID, Auth Token, and From Number stored as Cloudflare Workers secrets. Never in code, never in git, never visible in the dashboard.
+
+### 15. Notification sync: all channels receive the same alerts
 
 **Considered:** Independent rules per channel (email gets critical only, Slack gets everything)
 **Chose:** All forwarding rules use the same severity and provider filters
