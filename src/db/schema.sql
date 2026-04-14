@@ -1,0 +1,47 @@
+-- Core events table — every webhook lands here
+CREATE TABLE IF NOT EXISTS events (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  severity TEXT NOT NULL DEFAULT 'info',
+  summary TEXT NOT NULL DEFAULT '',
+  raw_payload TEXT NOT NULL,
+  delivery_id TEXT,
+  received_at TEXT NOT NULL,
+  processed_at TEXT,
+  status TEXT NOT NULL DEFAULT 'processed',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Fast lookups by tenant + filters
+CREATE INDEX IF NOT EXISTS idx_events_tenant ON events(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_events_tenant_provider ON events(tenant_id, provider);
+CREATE INDEX IF NOT EXISTS idx_events_tenant_type ON events(tenant_id, event_type);
+CREATE INDEX IF NOT EXISTS idx_events_tenant_status ON events(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_events_received ON events(received_at);
+-- Idempotency: prevent duplicate deliveries per provider+tenant
+CREATE UNIQUE INDEX IF NOT EXISTS idx_events_dedup ON events(tenant_id, provider, delivery_id);
+
+-- Retry queue — failed events waiting for retry
+CREATE TABLE IF NOT EXISTS retry_queue (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  event_id TEXT NOT NULL REFERENCES events(id),
+  attempt INTEGER NOT NULL DEFAULT 1,
+  max_attempts INTEGER NOT NULL DEFAULT 5,
+  next_retry_at TEXT NOT NULL,
+  last_error TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_retry_next ON retry_queue(next_retry_at);
+
+-- Dead letter queue — events that exhausted all retries
+CREATE TABLE IF NOT EXISTS dead_letter (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  event_id TEXT NOT NULL REFERENCES events(id),
+  attempts INTEGER NOT NULL,
+  last_error TEXT,
+  moved_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
