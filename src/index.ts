@@ -3,12 +3,14 @@ import { cors } from "hono/cors";
 import { getProvider, listProviders } from "./providers/registry";
 import { generateEventId, nowISO } from "./utils";
 import { processRetryQueue, queueForRetry } from "./retry";
+import { forwardEvent } from "./forwarding";
 import { dashboardHTML } from "./dashboard";
 import { generateWebhook, simulatorProviders } from "./simulator";
 
 /** Env bindings for Cloudflare Workers */
 export type Bindings = {
   DB: D1Database;
+  RESEND_API_KEY?: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -17,9 +19,7 @@ const app = new Hono<{ Bindings: Bindings }>();
 app.use("*", cors());
 
 // ─── Health ─────────────────────────────────────────────
-app.get("/", (c) =>
-  c.json({ status: "ok", service: "webhook-hub", providers: listProviders() })
-);
+app.get("/", (c) => c.redirect("/dashboard"));
 
 app.get("/api/health", async (c) => {
   try {
@@ -134,6 +134,17 @@ app.post("/webhooks/:provider/:tenant_id", async (c) => {
       // If even the fallback fails, return 500
     }
     return c.json({ error: "Processing failed — queued for retry", event_id: event.id }, 500);
+  }
+
+  // Forward to configured destinations (non-blocking)
+  // Uses waitUntil so the response returns immediately while forwarding happens in background
+  try {
+    const ctx = c.executionCtx;
+    if (ctx?.waitUntil) {
+      ctx.waitUntil(forwardEvent(c.env.DB, event, c.env.RESEND_API_KEY));
+    }
+  } catch {
+    // executionCtx not available (test environment) — skip forwarding
   }
 
   // Return 200 immediately (spec requirement)
@@ -339,6 +350,60 @@ app.get("/api/dead-letter", async (c) => {
     .all();
 
   return c.json({ dead_letters: result.results || [] });
+});
+
+// ─── Forwarding Rules API ───────────────────────────────
+
+// List forwarding rules for a tenant
+app.get("/api/forwarding", async (c) => {
+  const tenant_id = c.req.query("tenant_id");
+  if (!tenant_id) return c.json({ error: "tenant_id is required" }, 400);
+
+  const result = await c.env.DB.prepare(
+    "SELECT * FROM forwarding_rules WHERE tenant_id = ? ORDER BY created_at DESC"
+  ).bind(tenant_id).all();
+
+  return c.json({ rules: result.results || [] });
+});
+
+// Create a forwarding rule
+app.post("/api/forwarding", async (c) => {
+  const body = await c.req.json<{
+    tenant_id: string;
+    name?: string;
+    destination_type: string;
+    destination: string;
+    provider_filter?: string;
+    severity_filter?: string;
+  }>();
+
+  if (!body.tenant_id || !body.destination_type || !body.destination) {
+    return c.json({ error: "tenant_id, destination_type, and destination are required" }, 400);
+  }
+
+  if (!["webhook", "email"].includes(body.destination_type)) {
+    return c.json({ error: "destination_type must be 'webhook' or 'email'" }, 400);
+  }
+
+  await c.env.DB.prepare(
+    "INSERT INTO forwarding_rules (tenant_id, name, destination_type, destination, provider_filter, severity_filter) VALUES (?, ?, ?, ?, ?, ?)"
+  ).bind(
+    body.tenant_id,
+    body.name || "",
+    body.destination_type,
+    body.destination,
+    body.provider_filter || null,
+    body.severity_filter || null
+  ).run();
+
+  return c.json({ status: "created" }, 201);
+});
+
+// Delete a forwarding rule
+app.delete("/api/forwarding/:id", async (c) => {
+  const { id } = c.req.param();
+  await c.env.DB.prepare("DELETE FROM forwarding_rules WHERE id = ?").bind(id).run();
+  return c.json({ status: "deleted" });
 });
 
 // ─── Data Export ────────────────────────────────────────
