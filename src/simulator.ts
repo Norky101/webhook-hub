@@ -269,6 +269,90 @@ function zendeskPayload(): SimulatedWebhook {
   };
 }
 
+function stripePayload(): SimulatedWebhook {
+  const events = [
+    { type: "payment_intent.succeeded", amount: true },
+    { type: "payment_intent.payment_failed", amount: true },
+    { type: "customer.subscription.created", amount: false },
+    { type: "customer.subscription.deleted", amount: false },
+    { type: "invoice.paid", amount: true },
+    { type: "invoice.payment_failed", amount: true },
+    { type: "charge.disputed", amount: true },
+    { type: "charge.refunded", amount: true },
+  ];
+  const evt = pick(events);
+  const data: Record<string, unknown> = {
+    id: `pi_${randomInt(100000, 999999)}`,
+    customer_email: randomEmail(),
+  };
+  if (evt.amount) {
+    data.amount = randomInt(500, 50000);
+    data.currency = "usd";
+  }
+
+  return {
+    body: { id: `evt_sim_${randomInt(100000, 999999)}`, type: evt.type, data: { object: data } },
+    headers: { "stripe-event-id": `sim_${generateEventId()}` },
+  };
+}
+
+function datadogPayload(): SimulatedWebhook {
+  const transitions = ["Triggered", "Recovered", "Warn", "No Data"];
+  const titles = ["CPU usage > 90% on prod-web-01", "Memory usage critical on db-primary", "Disk space < 10% on worker-03", "API error rate > 5%", "Queue depth > 1000", "SSL cert expires in 3 days"];
+  const transition = pick(transitions);
+
+  return {
+    body: {
+      alert_id: String(randomInt(10000, 99999)),
+      alert_title: pick(titles),
+      alert_transition: transition,
+      priority: pick(["P1", "P2", "P3"]),
+      hostname: pick(["prod-web-01", "prod-api-02", "db-primary", "worker-03"]),
+    },
+    headers: { "x-dd-delivery-id": `sim_${generateEventId()}` },
+  };
+}
+
+function githubPayload(): SimulatedWebhook {
+  const types = [
+    { pr: true, action: "opened" },
+    { pr: true, action: "merged" },
+    { pr: true, action: "closed" },
+    { push: true },
+    { issue: true, action: "opened" },
+    { deployment: true, state: "success" },
+    { deployment: true, state: "failure" },
+  ];
+  const evt = pick(types) as Record<string, unknown>;
+  const prTitles = ["Fix auth redirect loop", "Add rate limiting", "Update deps", "Refactor webhook handler", "Add Stripe provider"];
+  const issueTitles = ["Dashboard crashes on mobile", "API returns 500 on large payloads", "Webhook delivery delayed"];
+  const repos = ["acme/api", "acme/dashboard", "acme/infra", "acme/webhook-hub"];
+
+  const body: Record<string, unknown> = {
+    repository: { full_name: pick(repos) },
+    sender: { login: pick(FIRST_NAMES).toLowerCase() + pick(LAST_NAMES).toLowerCase() },
+  };
+
+  if (evt.pr) {
+    body.action = evt.action as string;
+    body.pull_request = { title: pick(prTitles), number: randomInt(1, 500) };
+  } else if (evt.push) {
+    body.ref = "refs/heads/" + pick(["main", "develop", "feature/auth", "fix/webhook-retry"]);
+    body.commits = Array.from({ length: randomInt(1, 5) }, () => ({ message: pick(prTitles) }));
+  } else if (evt.issue) {
+    body.action = evt.action as string;
+    body.issue = { title: pick(issueTitles), number: randomInt(1, 200) };
+  } else if (evt.deployment) {
+    body.deployment = { id: randomInt(1000, 9999) };
+    body.deployment_status = { state: evt.state };
+  }
+
+  return {
+    body,
+    headers: { "x-github-delivery": `sim_${generateEventId()}` },
+  };
+}
+
 // ─── Public API ─────────────────────────────────────────
 
 const generators: Record<string, () => SimulatedWebhook> = {
@@ -280,6 +364,9 @@ const generators: Record<string, () => SimulatedWebhook> = {
   salesforce: salesforcePayload,
   pagerduty: pagerdutyPayload,
   zendesk: zendeskPayload,
+  stripe: stripePayload,
+  datadog: datadogPayload,
+  github: githubPayload,
 };
 
 export function generateWebhook(provider: string): SimulatedWebhook | null {

@@ -116,6 +116,9 @@ See [DECISIONS.md](DECISIONS.md) for the full rationale behind every technical c
 | **Salesforce** | HMAC-SHA256 | opportunity, contact, account, lead, case |
 | **PagerDuty** | HMAC-SHA256 (v1= prefix) | incident, service |
 | **Zendesk** | HMAC-SHA256 (base64) | ticket, user, organization |
+| **Stripe** | HMAC-SHA256 (timestamped) | payment, subscription, invoice, charge, customer |
+| **Datadog** | HMAC-SHA256 | monitor alerts, triggers, recoveries |
+| **GitHub** | HMAC-SHA256 (sha256= prefix) | PR, push, issue, deployment, workflow |
 
 ---
 
@@ -462,6 +465,9 @@ src/
     salesforce.ts   — Salesforce normalizer
     pagerduty.ts    — PagerDuty normalizer
     zendesk.ts      — Zendesk normalizer
+    stripe.ts       — Stripe normalizer
+    datadog.ts      — Datadog normalizer
+    github.ts       — GitHub normalizer
 test/
   webhook-hub.test.ts — 18 tests covering all spec requirements
 ```

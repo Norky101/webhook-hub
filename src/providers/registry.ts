@@ -7,6 +7,9 @@ import { gusto } from "./gusto";
 import { salesforce } from "./salesforce";
 import { pagerduty } from "./pagerduty";
 import { zendesk } from "./zendesk";
+import { stripe } from "./stripe";
+import { datadog } from "./datadog";
+import { github } from "./github";
 
 /**
  * Provider registry — add new providers here.
@@ -28,6 +31,9 @@ register(gusto);
 register(salesforce);
 register(pagerduty);
 register(zendesk);
+register(stripe);
+register(datadog);
+register(github);
 
 export function getProvider(name: string): WebhookProvider | undefined {
   return providers.get(name);

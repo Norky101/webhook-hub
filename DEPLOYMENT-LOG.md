@@ -134,6 +134,15 @@ Claude Code (CLI) — Claude Opus, max effort. (Upgraded to the $100 subscriptio
 - Elevated Twilio SMS/voice to standalone decision with escalation ladder
 - **Commit:** `Phase 15b: DECISIONS.md rewrite`
 
+### Session 16 — Stripe, Datadog, GitHub Providers (18:30–18:50)
+- 3 new providers bringing total to 11
+- Stripe: payment.succeeded/failed, subscription, invoice, charge, dispute events
+- Datadog: monitor alerts with triggered/recovered/warn/no_data mapping
+- GitHub: PR, push, issue, deployment, workflow events
+- All 3 added to simulator with realistic payloads
+- Dashboard dropdown + colors updated, test updated to verify 11 providers
+- **Commit:** `Phase 17: Stripe, Datadog, GitHub providers (11 total)`
+
 ---
 
 ## Process Notes

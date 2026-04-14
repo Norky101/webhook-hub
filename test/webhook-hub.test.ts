@@ -597,7 +597,7 @@ describe("Webhook Hub", () => {
   });
 
   // ─── Bonus: Provider registry ────────────────────────
-  it("18. Provider registry lists all 8 providers", () => {
+  it("18. Provider registry lists all 11 providers", () => {
     const providers = listProviders();
     expect(providers).toContain("hubspot");
     expect(providers).toContain("shopify");
@@ -607,6 +607,9 @@ describe("Webhook Hub", () => {
     expect(providers).toContain("salesforce");
     expect(providers).toContain("pagerduty");
     expect(providers).toContain("zendesk");
-    expect(providers).toHaveLength(8);
+    expect(providers).toContain("stripe");
+    expect(providers).toContain("datadog");
+    expect(providers).toContain("github");
+    expect(providers).toHaveLength(11);
   });
 });

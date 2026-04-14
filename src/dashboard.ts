@@ -142,6 +142,9 @@ export function dashboardHTML(): string {
       <option value="salesforce">Salesforce</option>
       <option value="pagerduty">PagerDuty</option>
       <option value="zendesk">Zendesk</option>
+      <option value="stripe">Stripe</option>
+      <option value="datadog">Datadog</option>
+      <option value="github">GitHub</option>
     </select>
     <button onclick="simulateWebhook()" id="sim-btn" style="background:#8957e5;">Simulate Webhook</button>
     <span id="sim-status" style="font-size:12px; color:#8b949e;"></span>
@@ -324,6 +327,9 @@ const PROVIDER_COLORS = {
   salesforce: '#00a1e0',
   pagerduty: '#06ac38',
   zendesk: '#03363d',
+  stripe: '#635bff',
+  datadog: '#632ca6',
+  github: '#8b949e',
 };
 const BASE = location.origin;
 let refreshTimer = null;
@@ -678,7 +684,7 @@ async function simulateWebhook() {
   const btn = document.getElementById('sim-btn');
   btn.disabled = true;
 
-  const allProviders = ['hubspot', 'shopify', 'linear', 'intercom', 'gusto', 'salesforce', 'pagerduty', 'zendesk'];
+  const allProviders = ['hubspot', 'shopify', 'linear', 'intercom', 'gusto', 'salesforce', 'pagerduty', 'zendesk', 'stripe', 'datadog', 'github'];
 
   if (provider === 'all') {
     status.textContent = 'Sending ' + (allProviders.length * 5) + ' events across all providers...';
