@@ -44,10 +44,22 @@ export async function forwardEvent(
   const rules = (result.results || []) as unknown as ForwardingRule[];
   if (rules.length === 0) return stats;
 
+  const SEVERITY_LEVELS: Record<string, number> = {
+    info: 0,
+    warning: 1,
+    error: 2,
+    critical: 3,
+  };
+
   for (const rule of rules) {
     // Apply filters
     if (rule.provider_filter && rule.provider_filter !== event.provider) continue;
-    if (rule.severity_filter && rule.severity_filter !== event.severity) continue;
+    // Severity filter means "this level and above"
+    if (rule.severity_filter) {
+      const eventLevel = SEVERITY_LEVELS[event.severity] ?? 0;
+      const ruleLevel = SEVERITY_LEVELS[rule.severity_filter] ?? 0;
+      if (eventLevel < ruleLevel) continue;
+    }
 
     try {
       if (rule.destination_type === "webhook") {

@@ -91,7 +91,27 @@ Documenting every meaningful decision made during the build — what was conside
 **Chose:** Interactive dashboard that works out of the box
 **Why:** The spec says "something an ops person can glance at and immediately know if things are healthy or on fire." That means zero-friction: auto-loads a default tenant, simulate button right in the UI, collapsible sections so users control information density. Every UX decision was filtered through "would Aaron open this and immediately understand what's happening?"
 
-## 14. Sprint 1: Search, export, chart toggle — visible features first
+## 14. Auth deferred — judgment call, not an oversight
+
+**Considered:** Building user login, registration, session management, and protected routes
+**Chose:** Defer auth entirely for the 24-hour window
+**Why:** Auth is infrastructure, not architecture. The multi-tenant isolation is already enforced via `tenant_id` in every API query — Tenant A can't see Tenant B's events regardless of whether there's a login page. Building auth properly would require ~4 hours of plumbing: users table, sessions, password hashing (Web Crypto API), middleware, login/register UI, session expiry, CSRF protection, error states. That's 4 hours that produces a login page — something every tutorial app has. It doesn't demonstrate webhook processing skill, architectural thinking, or AI-assisted velocity.
+
+The schema is designed for it (D1 supports the users/sessions tables), the dashboard's HTML-from-Worker pattern means login pages are trivial to add, and it's the first thing in Sprint 2 of the product roadmap. This was a deliberate scope decision: ship the hard stuff (retry engine, normalizer framework, ops dashboard) and defer the commodity stuff (login forms).
+
+## 15. Webhook forwarding — turning monitoring into automation
+
+**Considered:** Email-only notifications, Slack integration, custom webhook forwarding
+**Chose:** Generic forwarding engine supporting both email and webhook URL destinations, configurable per tenant from the dashboard
+**Why:** Monitoring alone answers "what happened." Forwarding answers "who needs to know?" Every ops team needs events to flow somewhere — Slack channels, email inboxes, PagerDuty, internal APIs. Building a generic forwarding engine means one feature covers all destinations. Email is the most accessible (everyone has it), webhook URLs cover everything else (Slack incoming webhooks, Zapier, custom APIs). Rules are filterable by provider and severity so you don't flood inboxes with noise.
+
+**How it works:** After a webhook is normalized and stored, the receiver checks `forwarding_rules` for the tenant. For each matching rule (filtered by provider and severity), it either POSTs the normalized JSON to a webhook URL or sends a styled HTML email via Resend. Forwarding runs via `waitUntil()` so the 200 response returns immediately — forwarding happens in the background.
+
+**Severity filtering:** Rules use "this level and above" logic — a `warning` filter matches warning, error, and critical events. This prevents missed alerts: if you care about warnings, you definitely care about errors. Severity levels: info (0) < warning (1) < error (2) < critical (3).
+
+**Email delivery:** Uses Resend API with the API key stored as a Cloudflare Workers secret (`RESEND_API_KEY`). The key never appears in code or git — it's encrypted in Cloudflare's secret store and only accessible at runtime.
+
+## 16. Sprint 1: Search, export, chart toggle — visible features first
 
 **Considered:** Building auth and Stripe first (infrastructure), or building visible dashboard features first
 **Chose:** Dashboard features: event search/filter, CSV/JSON export, bar/pie chart toggle
