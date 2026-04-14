@@ -2,6 +2,8 @@
 
 A multi-tenant webhook processing platform deployed on Cloudflare Workers with D1. Receives webhooks from multiple SaaS providers, normalizes them into a common event format, and provides a REST API and monitoring dashboard for ops visibility.
 
+> It's the webhook infrastructure layer that every B2B SaaS company eventually builds badly — built once, correctly, as a shared platform.
+
 **Live URL:** https://webhook-hub.noahpilkington98.workers.dev
 
 ---
