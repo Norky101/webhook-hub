@@ -386,6 +386,27 @@ curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/forwarding/tes
 
 ---
 
+### Cross-Tool Correlation
+
+Detect patterns across providers. When event A and event B happen within N minutes for the same tenant, generate a correlation alert.
+
+**`GET /api/correlations?tenant_id=X`** — List correlation rules
+
+**`POST /api/correlations`** — Create a rule
+
+```bash
+# Stripe payment failed + Zendesk ticket within 30 min = churn risk
+curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/correlations \
+  -H "Content-Type: application/json" \
+  -d '{"tenant_id":"acme_corp","name":"Churn risk","provider_a":"stripe","event_pattern_a":"payment.*failed","provider_b":"zendesk","event_pattern_b":"ticket.*","time_window_minutes":30,"action_description":"Auto-escalate to retention team"}'
+```
+
+**`DELETE /api/correlations/:id`** — Delete a rule
+
+Correlation alerts are `critical` severity and flow through all forwarding channels (Slack, email, SMS, voice call).
+
+---
+
 ### Remediation Playbooks
 
 Attach remediation steps to event patterns. When a matching event fires, the steps are included in Slack messages and emails automatically.
@@ -452,6 +473,7 @@ src/
   forwarding.ts     — Webhook forwarding engine (email, Slack, SMS, voice call, webhook URLs)
   health-scores.ts  — Provider health scoring and scheduled digest engine
   remediation.ts    — Remediation playbook matching engine
+  correlation.ts    — Cross-tool event correlation engine
   dashboard.ts      — HTML dashboard template
   db/
     schema.sql      — D1 schema (events, retry_queue, dead_letter)

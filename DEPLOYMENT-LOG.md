@@ -143,6 +143,15 @@ Claude Code (CLI) — Claude Opus, max effort. (Upgraded to the $100 subscriptio
 - Dashboard dropdown + colors updated, test updated to verify 11 providers
 - **Commit:** `Phase 17: Stripe, Datadog, GitHub providers (11 total)`
 
+### Session 17 — Cross-Tool Correlation Engine (18:50–19:00)
+- Built correlation engine: detect patterns across providers in real time
+- When event A + event B happen within N minutes → generate critical alert
+- Correlation alerts flow through all forwarding channels (Slack, email, SMS, call)
+- Stored as system events in the events table for dashboard visibility
+- CRUD API: GET/POST/DELETE /api/correlations
+- Supports wildcard event patterns (payment.* matches payment.failed)
+- **Commit:** `Phase 18: cross-tool correlation engine`
+
 ---
 
 ## Process Notes

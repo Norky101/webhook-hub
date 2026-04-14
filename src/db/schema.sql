@@ -66,6 +66,23 @@ CREATE TABLE IF NOT EXISTS remediation_playbooks (
 
 CREATE INDEX IF NOT EXISTS idx_remediation_tenant ON remediation_playbooks(tenant_id);
 
+-- Cross-tool correlation rules
+CREATE TABLE IF NOT EXISTS correlation_rules (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  provider_a TEXT NOT NULL,
+  event_pattern_a TEXT NOT NULL,
+  provider_b TEXT NOT NULL,
+  event_pattern_b TEXT NOT NULL,
+  time_window_minutes INTEGER NOT NULL DEFAULT 30,
+  action_description TEXT NOT NULL,
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_correlation_tenant ON correlation_rules(tenant_id, active);
+
 -- Dead letter queue — events that exhausted all retries
 CREATE TABLE IF NOT EXISTS dead_letter (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

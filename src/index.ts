@@ -6,6 +6,7 @@ import { processRetryQueue, queueForRetry } from "./retry";
 import { forwardEvent } from "./forwarding";
 import { dashboardHTML } from "./dashboard";
 import { getProviderHealthScores, sendHealthDigest } from "./health-scores";
+import { checkCorrelations } from "./correlation";
 import { generateWebhook, simulatorProviders } from "./simulator";
 
 /** Env bindings for Cloudflare Workers */
@@ -150,6 +151,7 @@ app.post("/webhooks/:provider/:tenant_id", async (c) => {
         ? { accountSid: c.env.TWILIO_ACCOUNT_SID, authToken: c.env.TWILIO_AUTH_TOKEN, fromNumber: c.env.TWILIO_FROM_NUMBER }
         : undefined;
       ctx.waitUntil(forwardEvent(c.env.DB, event, c.env.RESEND_API_KEY, twilioConfig));
+      ctx.waitUntil(checkCorrelations(c.env.DB, event, c.env.RESEND_API_KEY, twilioConfig));
     }
   } catch {
     // executionCtx not available (test environment) — skip forwarding
@@ -483,6 +485,55 @@ app.post("/api/playbooks", async (c) => {
 app.delete("/api/playbooks/:id", async (c) => {
   const { id } = c.req.param();
   await c.env.DB.prepare("DELETE FROM remediation_playbooks WHERE id = ?").bind(id).run();
+  return c.json({ status: "deleted" });
+});
+
+// ─── Correlation Rules API ──────────────────────────────
+
+app.get("/api/correlations", async (c) => {
+  const tenant_id = c.req.query("tenant_id");
+  if (!tenant_id) return c.json({ error: "tenant_id is required" }, 400);
+  const result = await c.env.DB.prepare(
+    "SELECT * FROM correlation_rules WHERE tenant_id = ? ORDER BY created_at DESC"
+  ).bind(tenant_id).all();
+  return c.json({ rules: result.results || [] });
+});
+
+app.post("/api/correlations", async (c) => {
+  const body = await c.req.json<{
+    tenant_id: string;
+    name: string;
+    provider_a: string;
+    event_pattern_a: string;
+    provider_b: string;
+    event_pattern_b: string;
+    time_window_minutes?: number;
+    action_description: string;
+  }>();
+
+  if (!body.tenant_id || !body.name || !body.provider_a || !body.event_pattern_a || !body.provider_b || !body.event_pattern_b || !body.action_description) {
+    return c.json({ error: "All fields required: tenant_id, name, provider_a, event_pattern_a, provider_b, event_pattern_b, action_description" }, 400);
+  }
+
+  await c.env.DB.prepare(
+    "INSERT INTO correlation_rules (tenant_id, name, provider_a, event_pattern_a, provider_b, event_pattern_b, time_window_minutes, action_description) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+  ).bind(
+    body.tenant_id,
+    body.name,
+    body.provider_a,
+    body.event_pattern_a,
+    body.provider_b,
+    body.event_pattern_b,
+    body.time_window_minutes || 30,
+    body.action_description
+  ).run();
+
+  return c.json({ status: "created" }, 201);
+});
+
+app.delete("/api/correlations/:id", async (c) => {
+  const { id } = c.req.param();
+  await c.env.DB.prepare("DELETE FROM correlation_rules WHERE id = ?").bind(id).run();
   return c.json({ status: "deleted" });
 });
 
