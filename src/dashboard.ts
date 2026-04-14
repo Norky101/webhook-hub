@@ -75,6 +75,12 @@ export function dashboardHTML(): string {
     .card .value.blue { color: #58a6ff; }
     .section { margin-bottom: 24px; }
     .section h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #8b949e; }
+    .collapsible { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px; }
+    .collapsible:hover { color: #e1e4e8; }
+    .collapsible .arrow { transition: transform 0.2s; font-size: 12px; }
+    .collapsible .arrow.open { transform: rotate(90deg); }
+    .collapsible-content { overflow: hidden; transition: max-height 0.3s ease; }
+    .collapsible-content.collapsed { max-height: 0 !important; }
     .provider-bars { display: flex; flex-direction: column; gap: 8px; }
     .bar-row { display: flex; align-items: center; gap: 12px; }
     .bar-label { width: 80px; font-size: 13px; text-align: right; color: #8b949e; }
@@ -161,14 +167,17 @@ export function dashboardHTML(): string {
   </div>
 
   <div class="section">
-    <h2>Events by Provider (24h)</h2>
-    <div class="provider-bars" id="provider-bars">
-      <div class="empty">Enter a tenant ID above</div>
+    <h2 class="collapsible" onclick="toggleSection('providers')"><span class="arrow open" id="arrow-providers">&#9654;</span> Events by Provider</h2>
+    <div class="collapsible-content" id="section-providers">
+      <div class="provider-bars" id="provider-bars">
+        <div class="empty">Enter a tenant ID above</div>
+      </div>
     </div>
   </div>
 
   <div class="section">
-    <h2>Recent Events</h2>
+    <h2 class="collapsible" onclick="toggleSection('events')"><span class="arrow open" id="arrow-events">&#9654;</span> Recent Events</h2>
+    <div class="collapsible-content" id="section-events">
     <table>
       <thead>
         <tr>
@@ -184,10 +193,12 @@ export function dashboardHTML(): string {
         <tr><td colspan="6" class="empty">No events loaded</td></tr>
       </tbody>
     </table>
+    </div>
   </div>
 
   <div class="section">
-    <h2>Recent Failures</h2>
+    <h2 class="collapsible" onclick="toggleSection('failures')"><span class="arrow open" id="arrow-failures">&#9654;</span> Recent Failures</h2>
+    <div class="collapsible-content" id="section-failures">
     <table>
       <thead>
         <tr>
@@ -202,6 +213,7 @@ export function dashboardHTML(): string {
         <tr><td colspan="5" class="empty">No failures</td></tr>
       </tbody>
     </table>
+    </div>
   </div>
 
 <script>
@@ -346,6 +358,22 @@ function esc(s) {
   const d = document.createElement('div');
   d.textContent = s;
   return d.innerHTML;
+}
+
+function toggleSection(name) {
+  const content = document.getElementById('section-' + name);
+  const arrow = document.getElementById('arrow-' + name);
+  if (content.classList.contains('collapsed')) {
+    content.classList.remove('collapsed');
+    content.style.maxHeight = content.scrollHeight + 'px';
+    arrow.classList.add('open');
+  } else {
+    content.style.maxHeight = content.scrollHeight + 'px';
+    requestAnimationFrame(() => {
+      content.classList.add('collapsed');
+      arrow.classList.remove('open');
+    });
+  }
 }
 
 async function simulateWebhook() {

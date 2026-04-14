@@ -77,7 +77,19 @@ Documenting every meaningful decision made during the build — what was conside
 
 **How it works:** Each provider has a payload generator with realistic random data (deal names, order amounts, issue titles, employee events). The simulate endpoint generates the payload, then sends it through the actual webhook receiver via an internal `app.fetch()` call — no external HTTP, same code path as a real webhook.
 
-**Dashboard integration:** The simulator is built directly into the dashboard UI. A dropdown lets you pick a single provider or "All Providers" (sends 5 events x 5 providers = 25 events). One click and the dashboard populates live — no curl, no terminal, no setup. The dashboard also auto-loads with `demo_tenant` so there's never a blank screen. This was an intentional UX decision: the first thing anyone sees should demonstrate the platform working, not ask them to configure something.
+**Dashboard integration:** The simulator is built directly into the dashboard UI. A dropdown lets you pick a single provider or "All Providers" (sends 5 events x 8 providers = 40 events). One click and the dashboard populates live — no curl, no terminal, no setup. The dashboard also auto-loads with `demo_tenant` so there's never a blank screen. This was an intentional UX decision: the first thing anyone sees should demonstrate the platform working, not ask them to configure something.
+
+## 12. Extra credit providers: Salesforce, PagerDuty, Zendesk
+
+**Considered:** Building all 10 extra credit providers from the spec
+**Chose:** 3 strategically selected extras (Salesforce, PagerDuty, Zendesk) — bringing the total to 8
+**Why:** These three cover the most distinct categories: enterprise CRM (Salesforce), engineering/incident management (PagerDuty), and support tickets (Zendesk). Each took ~10 minutes to stamp out using the registry pattern — proving the framework scales. Diminishing returns after 8 providers; the pattern is proven.
+
+## 13. Dashboard UX: collapsible sections, auto-load, built-in simulator
+
+**Considered:** Static dashboard that requires manual curl commands to populate
+**Chose:** Interactive dashboard that works out of the box
+**Why:** The spec says "something an ops person can glance at and immediately know if things are healthy or on fire." That means zero-friction: auto-loads a default tenant, simulate button right in the UI, collapsible sections so users control information density. Every UX decision was filtered through "would Aaron open this and immediately understand what's happening?"
 
 ---
 
@@ -122,7 +134,7 @@ This project was built entirely using Claude Code as the primary development too
 - Add rate limiting per tenant (prevent webhook flooding)
 - Auth on the REST API (API keys or JWT)
 - Dashboard: event search/filter, chart type toggle (bar/pie/line)
-- Extra credit providers (Salesforce, PagerDuty, Zendesk)
+- More extra credit providers (BambooHR, DocuSign, Notion, Datadog, Mailchimp)
 
 **1 week:**
 - Webhook forwarding — receive, normalize, then forward to tenant-configured destinations (Slack, email, other APIs)
