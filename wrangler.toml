@@ -1,0 +1,12 @@
+name = "webhook-hub"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "webhook-hub-db"
+database_id = "05532599-f3a8-497a-bd20-668179da10f5"
+
+# Retry engine — runs every minute
+[triggers]
+crons = ["* * * * *"]
