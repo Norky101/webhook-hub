@@ -64,6 +64,19 @@ Documenting every meaningful decision made during the build — what was conside
 **Chose:** Write full validation logic per provider, but don't enforce at the receiver yet
 **Why:** Enforcing signatures requires a per-tenant secret store (KV or env vars per tenant). Building that store is plumbing work that doesn't demonstrate architecture skill — it's just CRUD on secrets. Writing the validation logic proves I understand each provider's signature scheme. Leaving it unenforced keeps the system testable without needing real provider credentials. Documented as a known gap, not an oversight.
 
+## 11. One More Thing: Webhook Simulator
+
+**What:** A built-in endpoint (`POST /api/simulate/:provider/:tenant_id?count=N`) that generates realistic fake webhooks and sends them through the real pipeline — normalization, D1 storage, dedup, dashboard visibility.
+
+**Why I built this:** The evaluator will open my dashboard and want to see it working. Without real HubSpot/Shopify accounts configured, there's nothing to look at. The simulator solves this — fire off 25 simulated events and watch the dashboard populate in real time. It also doubles as a load test tool and a developer onboarding shortcut.
+
+**Why this over other ideas:**
+- Considered Slack alerting — useful but requires external account setup, can't be demoed instantly
+- Considered provider health scoring — interesting but doesn't have the visual impact
+- The simulator has the highest demo-to-effort ratio: ~30 minutes to build, instantly impressive to anyone evaluating the system
+
+**How it works:** Each provider has a payload generator with realistic random data (deal names, order amounts, issue titles, employee events). The simulate endpoint generates the payload, then sends it through the actual webhook receiver via an internal `app.fetch()` call — no external HTTP, same code path as a real webhook.
+
 ---
 
 ## The Thinking Behind The Build

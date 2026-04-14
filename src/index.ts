@@ -4,6 +4,7 @@ import { getProvider, listProviders } from "./providers/registry";
 import { generateEventId, nowISO } from "./utils";
 import { processRetryQueue, queueForRetry } from "./retry";
 import { dashboardHTML } from "./dashboard";
+import { generateWebhook, simulatorProviders } from "./simulator";
 
 /** Env bindings for Cloudflare Workers */
 export type Bindings = {
@@ -338,6 +339,60 @@ app.get("/api/dead-letter", async (c) => {
     .all();
 
   return c.json({ dead_letters: result.results || [] });
+});
+
+// ─── Webhook Simulator ("One More Thing") ──────────────
+
+// Simulate a single webhook or a burst
+app.post("/api/simulate/:provider/:tenant_id", async (c) => {
+  const { provider, tenant_id } = c.req.param();
+  const count = Math.min(parseInt(c.req.query("count") || "1"), 50);
+
+  const results = [];
+
+  for (let i = 0; i < count; i++) {
+    const simulated = generateWebhook(provider);
+    if (!simulated) {
+      return c.json({
+        error: `Unknown provider: ${provider}`,
+        available: simulatorProviders(),
+      }, 400);
+    }
+
+    // Build a real request and send it through the actual webhook receiver
+    const req = new Request(
+      `${new URL(c.req.url).origin}/webhooks/${provider}/${tenant_id}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...simulated.headers,
+        },
+        body: JSON.stringify(simulated.body),
+      }
+    );
+
+    const res = await app.fetch(req, c.env);
+    const json = await res.json() as Record<string, unknown>;
+    results.push(json);
+  }
+
+  return c.json({
+    status: "simulated",
+    provider,
+    tenant_id,
+    count: results.length,
+    events: results,
+  });
+});
+
+// List available simulator providers
+app.get("/api/simulate", (c) => {
+  return c.json({
+    providers: simulatorProviders(),
+    usage: "POST /api/simulate/:provider/:tenant_id?count=N",
+    example: "POST /api/simulate/hubspot/demo_tenant?count=5",
+  });
 });
 
 // ─── Helpers ────────────────────────────────────────────

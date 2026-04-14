@@ -265,6 +265,46 @@ Response:
 
 ---
 
+### Webhook Simulator (One More Thing)
+
+Built-in webhook simulator for live demos and testing — no real provider accounts needed.
+
+**`GET /api/simulate`** — List available providers and usage
+
+**`POST /api/simulate/:provider/:tenant_id`** — Generate and process a simulated webhook
+
+**`POST /api/simulate/:provider/:tenant_id?count=N`** — Burst mode (max 50)
+
+```bash
+# Simulate a single HubSpot webhook
+curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/simulate/hubspot/demo_tenant
+
+# Simulate 10 Shopify webhooks
+curl -X POST "https://webhook-hub.noahpilkington98.workers.dev/api/simulate/shopify/demo_tenant?count=10"
+
+# Populate the dashboard with events from all providers
+for p in hubspot shopify linear intercom gusto; do
+  curl -X POST "https://webhook-hub.noahpilkington98.workers.dev/api/simulate/$p/demo_tenant?count=5"
+done
+```
+
+Response:
+```json
+{
+  "status": "simulated",
+  "provider": "hubspot",
+  "tenant_id": "demo_tenant",
+  "count": 1,
+  "events": [
+    { "status": "accepted", "event_id": "evt_b6ba42ed2e7847ec", "event_type": "company.created" }
+  ]
+}
+```
+
+Simulated events go through the **real pipeline** — normalization, D1 storage, dedup, dashboard visibility. Open the dashboard and fire simulated webhooks to watch events flow in live.
+
+---
+
 ### Dashboard
 
 **`GET /dashboard`** — Monitoring dashboard
@@ -286,6 +326,7 @@ src/
   types.ts          — NormalizedEvent + WebhookProvider interface
   utils.ts          — HMAC, timing-safe compare, ID generation
   retry.ts          — Retry engine with exponential backoff
+  simulator.ts      — Webhook simulator for demos and testing
   dashboard.ts      — HTML dashboard template
   db/
     schema.sql      — D1 schema (events, retry_queue, dead_letter)

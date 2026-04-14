@@ -66,6 +66,15 @@ Claude Code (CLI) — Claude Opus, max effort. Used for architecture, code gener
 - Sent test webhooks across all 5 providers to populate the dashboard with real data
 - **Commit:** `Phase 6` through `Phase 7` + supporting commits
 
+### Session 7 — One More Thing: Webhook Simulator (12:35–13:00)
+- Built the webhook simulator: realistic payload generators for all 5 providers
+- Wired `POST /api/simulate/:provider/:tenant_id?count=N` endpoint
+- Sends simulated webhooks through the real pipeline (normalization, D1, dashboard)
+- Tested live: single events, burst mode, all 5 providers
+- Populated demo_tenant with 25 simulated events across all providers
+- Updated README with simulator docs, DECISIONS.md with "One More Thing" rationale
+- **Commit:** `Phase 8: webhook simulator`
+
 ---
 
 ## Process Notes
