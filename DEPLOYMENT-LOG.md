@@ -145,13 +145,21 @@ Claude Code (CLI) — Claude Opus, max effort. Used for architecture, code gener
 - Overall status: healthy/degraded/critical based on worst provider
 - **Commit:** `Phase 13: provider health scores`
 
-### Session 15 — Health Digest to Slack + SMS Foundation (17:15–17:25)
+### Session 15 — Health Digest to Slack (17:15–17:25)
 - Health digest: sends per-provider health report to Slack #provider-health-stats every 20 min
 - Runs on existing cron trigger (fires every minute, digest on minute % 20 === 0)
 - Shows all tenants' provider health with emoji status indicators
 - Manual trigger: POST /api/health/digest for testing
 - SLACK_HEALTH_WEBHOOK_URL stored as CF Workers secret
 - **Commit:** `Phase 14: health digest to Slack every 20min`
+
+### Session 16 — Twilio SMS + Voice Call Alerts (17:25–17:40)
+- SMS forwarding via Twilio: sends text with event details + first 3 remediation steps
+- Voice call forwarding via Twilio: phone rings, AI voice reads the alert summary
+- Both use Twilio credentials stored as CF Workers secrets (SID, token, from number)
+- Dashboard forwarding UI updated with SMS and Voice Call options
+- 5 forwarding channels now supported: email, Slack, SMS, voice call, webhook URL
+- **Commit:** `Phase 15: Twilio SMS + voice call alerts`
 
 ---
 

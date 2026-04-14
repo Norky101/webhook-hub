@@ -13,6 +13,9 @@ export type Bindings = {
   DB: D1Database;
   RESEND_API_KEY?: string;
   SLACK_HEALTH_WEBHOOK_URL?: string;
+  TWILIO_ACCOUNT_SID?: string;
+  TWILIO_AUTH_TOKEN?: string;
+  TWILIO_FROM_NUMBER?: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -143,7 +146,10 @@ app.post("/webhooks/:provider/:tenant_id", async (c) => {
   try {
     const ctx = c.executionCtx;
     if (ctx?.waitUntil) {
-      ctx.waitUntil(forwardEvent(c.env.DB, event, c.env.RESEND_API_KEY));
+      const twilioConfig = c.env.TWILIO_ACCOUNT_SID && c.env.TWILIO_AUTH_TOKEN && c.env.TWILIO_FROM_NUMBER
+        ? { accountSid: c.env.TWILIO_ACCOUNT_SID, authToken: c.env.TWILIO_AUTH_TOKEN, fromNumber: c.env.TWILIO_FROM_NUMBER }
+        : undefined;
+      ctx.waitUntil(forwardEvent(c.env.DB, event, c.env.RESEND_API_KEY, twilioConfig));
     }
   } catch {
     // executionCtx not available (test environment) — skip forwarding
@@ -383,8 +389,8 @@ app.post("/api/forwarding", async (c) => {
     return c.json({ error: "tenant_id, destination_type, and destination are required" }, 400);
   }
 
-  if (!["webhook", "email", "slack"].includes(body.destination_type)) {
-    return c.json({ error: "destination_type must be 'webhook', 'email', or 'slack'" }, 400);
+  if (!["webhook", "email", "slack", "sms", "call"].includes(body.destination_type)) {
+    return c.json({ error: "destination_type must be 'webhook', 'email', 'slack', 'sms', or 'call'" }, 400);
   }
 
   await c.env.DB.prepare(
@@ -496,7 +502,10 @@ app.post("/api/forwarding/test/:tenant_id", async (c) => {
     status: "processed" as const,
   };
 
-  const result = await forwardEvent(c.env.DB, testEvent, c.env.RESEND_API_KEY);
+  const twilioConfig = c.env.TWILIO_ACCOUNT_SID && c.env.TWILIO_AUTH_TOKEN && c.env.TWILIO_FROM_NUMBER
+    ? { accountSid: c.env.TWILIO_ACCOUNT_SID, authToken: c.env.TWILIO_AUTH_TOKEN, fromNumber: c.env.TWILIO_FROM_NUMBER }
+    : undefined;
+  const result = await forwardEvent(c.env.DB, testEvent, c.env.RESEND_API_KEY, twilioConfig);
   return c.json({ status: "test_sent", ...result });
 });
 

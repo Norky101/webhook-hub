@@ -5,8 +5,10 @@
  * forwarding rules. If yes, send the normalized event to each destination.
  *
  * Supports:
- * - webhook: POST the normalized event JSON to a URL
+ * - webhook/slack: POST the normalized event JSON to a URL
  * - email: send via Resend API (free tier: 3,000/mo)
+ * - sms: send via Twilio API
+ * - call: voice call via Twilio API (critical alerts)
  */
 
 import type { NormalizedEvent } from "./types";
@@ -23,6 +25,12 @@ interface ForwardingRule {
   active: number;
 }
 
+export interface TwilioConfig {
+  accountSid: string;
+  authToken: string;
+  fromNumber: string;
+}
+
 /**
  * Process forwarding rules for a normalized event.
  * Called after successful event storage.
@@ -30,7 +38,8 @@ interface ForwardingRule {
 export async function forwardEvent(
   db: D1Database,
   event: NormalizedEvent,
-  resendApiKey?: string
+  resendApiKey?: string,
+  twilioConfig?: TwilioConfig
 ): Promise<{ forwarded: number; errors: string[] }> {
   const stats = { forwarded: 0, errors: [] as string[] };
 
@@ -80,6 +89,20 @@ export async function forwardEvent(
           continue;
         }
         await forwardToEmail(rule.destination, event, resendApiKey, remediation);
+        stats.forwarded++;
+      } else if (rule.destination_type === "sms") {
+        if (!twilioConfig) {
+          stats.errors.push(`SMS forwarding not configured (no Twilio credentials)`);
+          continue;
+        }
+        await forwardToSMS(rule.destination, event, twilioConfig, remediation);
+        stats.forwarded++;
+      } else if (rule.destination_type === "call") {
+        if (!twilioConfig) {
+          stats.errors.push(`Call forwarding not configured (no Twilio credentials)`);
+          continue;
+        }
+        await forwardToCall(rule.destination, event, twilioConfig);
         stats.forwarded++;
       }
     } catch (e) {
@@ -253,4 +276,88 @@ function buildEmailHTML(event: NormalizedEvent, remediation: RemediationMatch[] 
       </p>
     </div>
   `;
+}
+
+// ─── SMS via Twilio ─────────────────────────────────────
+
+async function forwardToSMS(
+  to: string,
+  event: NormalizedEvent,
+  config: TwilioConfig,
+  remediation: RemediationMatch[] = []
+): Promise<void> {
+  const severityLabel: Record<string, string> = {
+    info: "INFO",
+    warning: "WARN",
+    error: "ERROR",
+    critical: "CRITICAL",
+  };
+
+  let message = `[${severityLabel[event.severity] || event.severity}] ${event.provider}: ${event.event_type}\n${event.summary}`;
+
+  if (remediation.length > 0) {
+    const steps = remediation[0].steps.slice(0, 3).map((s, i) => `${i + 1}. ${s}`).join("\n");
+    message += `\n\nAction:\n${steps}`;
+  }
+
+  // Twilio SMS API
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${config.accountSid}/Messages.json`;
+  const body = new URLSearchParams({
+    To: to,
+    From: config.fromNumber,
+    Body: message,
+  });
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: "Basic " + btoa(`${config.accountSid}:${config.authToken}`),
+    },
+    body: body.toString(),
+  });
+
+  if (!res.ok) {
+    const err = await res.text().catch(() => "");
+    throw new Error(`Twilio SMS ${res.status}: ${err}`);
+  }
+}
+
+// ─── Voice Call via Twilio ──────────────────────────────
+
+async function forwardToCall(
+  to: string,
+  event: NormalizedEvent,
+  config: TwilioConfig
+): Promise<void> {
+  const severityLabel: Record<string, string> = {
+    info: "info",
+    warning: "warning",
+    error: "error",
+    critical: "critical",
+  };
+
+  // TwiML: Twilio's XML markup for what to say on the call
+  const twiml = `<Response><Say voice="alice">Webhook Hub alert. ${severityLabel[event.severity] || ""} severity. Provider: ${event.provider}. Event: ${event.event_type.replace(/\./g, " ")}. ${event.summary.replace(/[<>&'"]/g, "")}. Check your dashboard for details.</Say><Pause length="1"/><Say voice="alice">Repeating. ${event.summary.replace(/[<>&'"]/g, "")}.</Say></Response>`;
+
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${config.accountSid}/Calls.json`;
+  const body = new URLSearchParams({
+    To: to,
+    From: config.fromNumber,
+    Twiml: twiml,
+  });
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: "Basic " + btoa(`${config.accountSid}:${config.authToken}`),
+    },
+    body: body.toString(),
+  });
+
+  if (!res.ok) {
+    const err = await res.text().catch(() => "");
+    throw new Error(`Twilio Call ${res.status}: ${err}`);
+  }
 }

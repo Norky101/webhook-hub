@@ -226,11 +226,15 @@ This project was built entirely using Claude Code as the primary development too
 - ~~Extra credit providers~~ → Done (8 total: +Salesforce, PagerDuty, Zendesk)
 - ~~Remediation playbooks~~ → Done (Phase 12)
 
+**Already built (second pass):**
+- ~~SMS alerts via Twilio for critical events~~ → Done (Phase 15)
+- ~~Voice call alerts via Twilio~~ → Done (Phase 15, phone rings on critical events)
+- ~~Scheduled health digest to Slack~~ → Done (Phase 14, every 20 min)
+
 **Next 48 hours:**
 - Enforce signature validation with a tenant secret store (Workers KV)
 - Add rate limiting per tenant (prevent webhook flooding)
 - Auth on the REST API (D1-based users/sessions, login UI)
-- SMS alerts via Twilio for critical events (wake up engineers)
 - Alerting rules engine — "notify me when error rate > 10/hour for any provider"
 - Cross-tool event correlation — detect patterns across providers
 - More providers (BambooHR, DocuSign, Notion, Datadog, Mailchimp → 13 total)

@@ -272,6 +272,8 @@ export function dashboardHTML(): string {
         <select id="fwd-type" onchange="updateDestPlaceholder()" style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:6px 10px; border-radius:6px; font-size:12px;">
           <option value="email">Email</option>
           <option value="slack">Slack</option>
+          <option value="sms">SMS</option>
+          <option value="call">Voice Call</option>
           <option value="webhook">Webhook URL</option>
         </select>
         <input type="text" id="fwd-dest" placeholder="email@example.com" style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:6px 10px; border-radius:6px; font-size:12px; flex:1; min-width:200px;">
@@ -574,6 +576,8 @@ function updateDestPlaceholder() {
   const dest = document.getElementById('fwd-dest');
   if (type === 'email') dest.placeholder = 'email@example.com';
   else if (type === 'slack') dest.placeholder = 'https://hooks.slack.com/services/...';
+  else if (type === 'sms') dest.placeholder = '+1234567890';
+  else if (type === 'call') dest.placeholder = '+1234567890 (phone will ring)';
   else dest.placeholder = 'https://your-api.com/webhook';
 }
 

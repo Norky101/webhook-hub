@@ -341,7 +341,16 @@ Simulated events go through the **real pipeline** — normalization, D1 storage,
 
 ### Webhook Forwarding
 
-Forward normalized events to email or webhook URLs. Configure rules from the dashboard or API.
+Forward normalized events to email, Slack, SMS, voice call, or webhook URLs. Configure rules from the dashboard or API.
+
+**Supported channels:**
+| Channel | Destination | What happens |
+|---|---|---|
+| Email | email address | Styled HTML email via Resend |
+| Slack | webhook URL | Rich Block Kit message with emoji |
+| SMS | phone number | Text message with event summary + remediation steps |
+| Voice Call | phone number | Phone rings, AI voice reads the alert |
+| Webhook | any URL | Raw JSON POST |
 
 **`GET /api/forwarding?tenant_id=X`** — List forwarding rules
 
