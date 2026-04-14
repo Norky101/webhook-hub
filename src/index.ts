@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { getProvider, listProviders } from "./providers/registry";
 import { generateEventId, nowISO } from "./utils";
+import { processRetryQueue, queueForRetry } from "./retry";
 
 /** Env bindings for Cloudflare Workers */
 export type Bindings = {
@@ -103,8 +104,29 @@ app.post("/webhooks/:provider/:tenant_id", async (c) => {
       )
       .run();
   } catch (e) {
-    // If insert fails, queue for retry
-    return c.json({ error: "Processing failed", detail: String(e) }, 500);
+    // Store as failed, then queue for retry
+    try {
+      await c.env.DB.prepare(
+        `INSERT INTO events (id, tenant_id, provider, event_type, severity, summary, raw_payload, delivery_id, received_at, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'failed')`
+      )
+        .bind(
+          event.id,
+          event.tenant_id,
+          event.provider,
+          event.event_type,
+          event.severity,
+          event.summary,
+          JSON.stringify(event.raw_payload),
+          deliveryId,
+          event.received_at
+        )
+        .run();
+      await queueForRetry(c.env.DB, event.id);
+    } catch {
+      // If even the fallback fails, return 500
+    }
+    return c.json({ error: "Processing failed — queued for retry", event_id: event.id }, 500);
   }
 
   // Return 200 immediately (spec requirement)
@@ -274,6 +296,44 @@ app.delete("/api/events", async (c) => {
   });
 });
 
+// ─── Retry / Dead Letter API ────────────────────────────
+
+// View retry queue
+app.get("/api/retries", async (c) => {
+  const tenant_id = c.req.query("tenant_id");
+  if (!tenant_id) return c.json({ error: "tenant_id is required" }, 400);
+
+  const result = await c.env.DB.prepare(
+    `SELECT rq.*, e.provider, e.event_type, e.summary
+     FROM retry_queue rq
+     JOIN events e ON rq.event_id = e.id
+     WHERE e.tenant_id = ?
+     ORDER BY rq.next_retry_at ASC`
+  )
+    .bind(tenant_id)
+    .all();
+
+  return c.json({ retries: result.results || [] });
+});
+
+// View dead letter queue
+app.get("/api/dead-letter", async (c) => {
+  const tenant_id = c.req.query("tenant_id");
+  if (!tenant_id) return c.json({ error: "tenant_id is required" }, 400);
+
+  const result = await c.env.DB.prepare(
+    `SELECT dl.*, e.provider, e.event_type, e.summary
+     FROM dead_letter dl
+     JOIN events e ON dl.event_id = e.id
+     WHERE e.tenant_id = ?
+     ORDER BY dl.moved_at DESC`
+  )
+    .bind(tenant_id)
+    .all();
+
+  return c.json({ dead_letters: result.results || [] });
+});
+
 // ─── Helpers ────────────────────────────────────────────
 
 /** Parse a D1 row back into a clean event object */
@@ -290,8 +350,8 @@ function parseEventRow(row: Record<string, unknown>) {
 export default {
   fetch: app.fetch,
 
-  // Cron trigger for retry engine (Phase 5)
+  // Cron trigger — fires every minute, processes retry queue
   async scheduled(event: ScheduledEvent, env: Bindings, ctx: ExecutionContext) {
-    // TODO: process retry queue
+    ctx.waitUntil(processRetryQueue(env.DB));
   },
 };
