@@ -446,7 +446,8 @@ src/
   utils.ts          — HMAC, timing-safe compare, ID generation
   retry.ts          — Retry engine with exponential backoff
   simulator.ts      — Webhook simulator for demos and testing
-  forwarding.ts     — Webhook forwarding engine (email + Slack + webhook URLs)
+  forwarding.ts     — Webhook forwarding engine (email, Slack, SMS, voice call, webhook URLs)
+  health-scores.ts  — Provider health scoring and scheduled digest engine
   remediation.ts    — Remediation playbook matching engine
   dashboard.ts      — HTML dashboard template
   db/
@@ -485,4 +486,4 @@ npm test
 9. Stats — correct counts after ingestion (1 test)
 10. Health — returns system status with all providers (1 test)
 11. Edge cases — unknown provider, invalid JSON (2 tests)
-12. Provider registry — all 5 registered (1 test)
+12. Provider registry — all 8 registered (1 test)
