@@ -196,6 +196,79 @@ function gustoPayload(): SimulatedWebhook {
   };
 }
 
+function salesforcePayload(): SimulatedWebhook {
+  const actions = ["created", "updated", "deleted"];
+  const objects = ["Opportunity", "Contact", "Account", "Lead", "Case"];
+  const action = pick(actions);
+  const sobjectType = pick(objects);
+
+  return {
+    body: {
+      action,
+      sobjectType,
+      Id: `001${String.fromCharCode(randomInt(65, 90))}${randomInt(10000, 99999)}`,
+      Name: `${pick(COMPANIES)} — ${pick(DEAL_NAMES)}`,
+      attributes: { type: sobjectType },
+    },
+    headers: { "x-sfdc-delivery-id": `sim_${generateEventId()}` },
+  };
+}
+
+function pagerdutyPayload(): SimulatedWebhook {
+  const events = [
+    { type: "incident.triggered", urgency: "high" },
+    { type: "incident.triggered", urgency: "low" },
+    { type: "incident.acknowledged", urgency: "high" },
+    { type: "incident.resolved", urgency: "high" },
+    { type: "incident.escalated", urgency: "high" },
+  ];
+  const evt = pick(events);
+  const titles = ["CPU usage >95% on prod-web-01", "API latency p99 > 2s", "Database connection pool exhausted", "SSL certificate expires in 7 days", "Memory leak detected in worker", "Deployment pipeline failing"];
+
+  return {
+    body: {
+      event: {
+        event_type: evt.type,
+        data: {
+          id: `P${randomInt(100000, 999999)}`,
+          title: pick(titles),
+          urgency: evt.urgency,
+          service: { name: pick(["web-api", "worker", "database", "cdn", "auth-service"]) },
+        },
+      },
+      message_id: `sim_${generateEventId()}`,
+    },
+    headers: { "x-webhook-id": `sim_${generateEventId()}` },
+  };
+}
+
+function zendeskPayload(): SimulatedWebhook {
+  const events = [
+    { action: "created", status: "new" },
+    { action: "updated", status: "open" },
+    { action: "updated", status: "pending" },
+    { action: "updated", status: "solved" },
+  ];
+  const priorities = ["low", "normal", "high", "urgent"];
+  const subjects = ["Can't login to dashboard", "Billing discrepancy on invoice", "Feature request: bulk export", "API returning 500 errors", "Need to upgrade plan", "Data not syncing"];
+  const evt = pick(events);
+
+  return {
+    body: {
+      type: "ticket",
+      action: evt.action,
+      ticket: {
+        id: randomInt(10000, 99999),
+        subject: pick(subjects),
+        status: evt.status,
+        priority: pick(priorities),
+        requester: { name: `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`, email: randomEmail() },
+      },
+    },
+    headers: { "x-zendesk-webhook-id": `sim_${generateEventId()}` },
+  };
+}
+
 // ─── Public API ─────────────────────────────────────────
 
 const generators: Record<string, () => SimulatedWebhook> = {
@@ -204,6 +277,9 @@ const generators: Record<string, () => SimulatedWebhook> = {
   linear: linearPayload,
   intercom: intercomPayload,
   gusto: gustoPayload,
+  salesforce: salesforcePayload,
+  pagerduty: pagerdutyPayload,
+  zendesk: zendeskPayload,
 };
 
 export function generateWebhook(provider: string): SimulatedWebhook | null {

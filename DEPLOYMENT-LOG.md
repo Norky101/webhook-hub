@@ -75,6 +75,19 @@ Claude Code (CLI) — Claude Opus, max effort. Used for architecture, code gener
 - Updated README with simulator docs, DECISIONS.md with "One More Thing" rationale
 - **Commit:** `Phase 8: webhook simulator`
 
+### Session 8 — Dashboard UX Polish (13:00–13:15)
+- Dashboard auto-loads demo_tenant by default (no blank screen on first visit)
+- Added "Simulate Webhook" button directly in the dashboard UI
+- Added "All Providers" option to the dropdown (sends 25 events in one click)
+- Added explainer text so visitors immediately understand what they're looking at
+- Improved tenant input placeholder to explain what to enter
+- **Commit:** `Dashboard UX: auto-load demo tenant, simulate buttons, explainer text`
+
+### Session 9 — Extra Credit Providers + Final Polish (13:15–)
+- Added extra credit providers to prove the framework pattern scales
+- End-to-end review of all docs, live URL, dashboard
+- Final deployment log update
+
 ---
 
 ## Process Notes

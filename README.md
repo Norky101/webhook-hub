@@ -113,6 +113,9 @@ See [DECISIONS.md](DECISIONS.md) for the full rationale behind every technical c
 | **Linear** | HMAC-SHA256 | issue, comment, project, cycle |
 | **Intercom** | HMAC-SHA1 | conversation, contact, user |
 | **Gusto** | HMAC-SHA256 | payroll, employee, contractor |
+| **Salesforce** | HMAC-SHA256 | opportunity, contact, account, lead, case |
+| **PagerDuty** | HMAC-SHA256 (v1= prefix) | incident, service |
+| **Zendesk** | HMAC-SHA256 (base64) | ticket, user, organization |
 
 ---
 
@@ -337,6 +340,9 @@ src/
     linear.ts       — Linear normalizer
     intercom.ts     — Intercom normalizer
     gusto.ts        — Gusto normalizer
+    salesforce.ts   — Salesforce normalizer
+    pagerduty.ts    — PagerDuty normalizer
+    zendesk.ts      — Zendesk normalizer
 test/
   webhook-hub.test.ts — 18 tests covering all spec requirements
 ```

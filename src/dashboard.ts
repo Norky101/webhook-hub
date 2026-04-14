@@ -133,6 +133,9 @@ export function dashboardHTML(): string {
       <option value="linear">Linear</option>
       <option value="intercom">Intercom</option>
       <option value="gusto">Gusto</option>
+      <option value="salesforce">Salesforce</option>
+      <option value="pagerduty">PagerDuty</option>
+      <option value="zendesk">Zendesk</option>
     </select>
     <button onclick="simulateWebhook()" id="sim-btn" style="background:#8957e5;">Simulate Webhook</button>
     <span id="sim-status" style="font-size:12px; color:#8b949e;"></span>
@@ -208,6 +211,9 @@ const PROVIDER_COLORS = {
   linear: '#5e6ad2',
   intercom: '#286efa',
   gusto: '#f45d48',
+  salesforce: '#00a1e0',
+  pagerduty: '#06ac38',
+  zendesk: '#03363d',
 };
 const BASE = location.origin;
 let refreshTimer = null;
@@ -350,15 +356,15 @@ async function simulateWebhook() {
   const btn = document.getElementById('sim-btn');
   btn.disabled = true;
 
-  const allProviders = ['hubspot', 'shopify', 'linear', 'intercom', 'gusto'];
+  const allProviders = ['hubspot', 'shopify', 'linear', 'intercom', 'gusto', 'salesforce', 'pagerduty', 'zendesk'];
 
   if (provider === 'all') {
-    status.textContent = 'Sending 25 events across all providers...';
+    status.textContent = 'Sending ' + (allProviders.length * 5) + ' events across all providers...';
     try {
       await Promise.all(allProviders.map(p =>
         fetch(BASE + '/api/simulate/' + p + '/' + tenant + '?count=5', { method: 'POST' })
       ));
-      status.textContent = '25 events sent across all providers!';
+      status.textContent = (allProviders.length * 5) + ' events sent across all providers!';
       setTimeout(() => { status.textContent = ''; }, 3000);
       loadDashboard();
     } catch (err) {
