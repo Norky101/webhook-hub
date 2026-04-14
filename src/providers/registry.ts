@@ -1,5 +1,9 @@
 import type { WebhookProvider } from "../types";
 import { hubspot } from "./hubspot";
+import { shopify } from "./shopify";
+import { linear } from "./linear";
+import { intercom } from "./intercom";
+import { gusto } from "./gusto";
 
 /**
  * Provider registry — add new providers here.
@@ -13,6 +17,10 @@ function register(provider: WebhookProvider) {
 
 // Register all providers
 register(hubspot);
+register(shopify);
+register(linear);
+register(intercom);
+register(gusto);
 
 export function getProvider(name: string): WebhookProvider | undefined {
   return providers.get(name);
