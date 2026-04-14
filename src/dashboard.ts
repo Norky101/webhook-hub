@@ -260,11 +260,12 @@ export function dashboardHTML(): string {
       <p style="font-size:12px; color:#8b949e; margin-bottom:12px;">Forward normalized events to email or webhook URLs. Rules apply to all incoming webhooks for this tenant.</p>
       <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
         <input type="text" id="fwd-name" placeholder="Rule name (e.g. Ops alerts)" style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:6px 10px; border-radius:6px; font-size:12px; width:150px;">
-        <select id="fwd-type" style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:6px 10px; border-radius:6px; font-size:12px;">
+        <select id="fwd-type" onchange="updateDestPlaceholder()" style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:6px 10px; border-radius:6px; font-size:12px;">
           <option value="email">Email</option>
+          <option value="slack">Slack</option>
           <option value="webhook">Webhook URL</option>
         </select>
-        <input type="text" id="fwd-dest" placeholder="email@example.com or https://..." style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:6px 10px; border-radius:6px; font-size:12px; flex:1; min-width:200px;">
+        <input type="text" id="fwd-dest" placeholder="email@example.com" style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:6px 10px; border-radius:6px; font-size:12px; flex:1; min-width:200px;">
         <select id="fwd-provider" style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:6px 10px; border-radius:6px; font-size:12px;">
           <option value="">All providers</option>
           <option value="hubspot">HubSpot</option>
@@ -535,6 +536,14 @@ function setChart(type) {
     active.style.borderColor = '#484f58';
   }
   renderProviderChart();
+}
+
+function updateDestPlaceholder() {
+  const type = document.getElementById('fwd-type').value;
+  const dest = document.getElementById('fwd-dest');
+  if (type === 'email') dest.placeholder = 'email@example.com';
+  else if (type === 'slack') dest.placeholder = 'https://hooks.slack.com/services/...';
+  else dest.placeholder = 'https://your-api.com/webhook';
 }
 
 async function loadForwardingRules() {

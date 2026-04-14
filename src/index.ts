@@ -381,8 +381,8 @@ app.post("/api/forwarding", async (c) => {
     return c.json({ error: "tenant_id, destination_type, and destination are required" }, 400);
   }
 
-  if (!["webhook", "email"].includes(body.destination_type)) {
-    return c.json({ error: "destination_type must be 'webhook' or 'email'" }, 400);
+  if (!["webhook", "email", "slack"].includes(body.destination_type)) {
+    return c.json({ error: "destination_type must be 'webhook', 'email', or 'slack'" }, 400);
   }
 
   await c.env.DB.prepare(

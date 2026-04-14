@@ -62,7 +62,7 @@ export async function forwardEvent(
     }
 
     try {
-      if (rule.destination_type === "webhook") {
+      if (rule.destination_type === "webhook" || rule.destination_type === "slack") {
         await forwardToWebhook(rule.destination, event);
         stats.forwarded++;
       } else if (rule.destination_type === "email") {
@@ -85,6 +85,14 @@ async function forwardToWebhook(
   url: string,
   event: NormalizedEvent
 ): Promise<void> {
+  // Detect Slack incoming webhooks and format as Slack blocks
+  const isSlack = url.includes("hooks.slack.com") || url.includes("slack.com/api");
+  const body = isSlack ? buildSlackPayload(event) : {
+    source: "webhook-hub",
+    event,
+    forwarded_at: new Date().toISOString(),
+  };
+
   const res = await fetch(url, {
     method: "POST",
     headers: {
@@ -93,16 +101,60 @@ async function forwardToWebhook(
       "X-Webhook-Hub-Event": event.event_type,
       "X-Webhook-Hub-Provider": event.provider,
     },
-    body: JSON.stringify({
-      source: "webhook-hub",
-      event,
-      forwarded_at: new Date().toISOString(),
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
     throw new Error(`HTTP ${res.status}: ${await res.text().catch(() => "")}`);
   }
+}
+
+function buildSlackPayload(event: NormalizedEvent): Record<string, unknown> {
+  const severityEmoji: Record<string, string> = {
+    info: ":large_blue_circle:",
+    warning: ":warning:",
+    error: ":red_circle:",
+    critical: ":rotating_light:",
+  };
+  const emoji = severityEmoji[event.severity] || ":bell:";
+
+  return {
+    blocks: [
+      {
+        type: "header",
+        text: {
+          type: "plain_text",
+          text: `${event.provider} — ${event.event_type}`,
+        },
+      },
+      {
+        type: "section",
+        fields: [
+          { type: "mrkdwn", text: `*Provider:*\n${event.provider}` },
+          { type: "mrkdwn", text: `*Event:*\n${event.event_type}` },
+          { type: "mrkdwn", text: `*Severity:*\n${emoji} ${event.severity}` },
+          { type: "mrkdwn", text: `*Tenant:*\n${event.tenant_id}` },
+        ],
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Summary:*\n${event.summary}`,
+        },
+      },
+      {
+        type: "context",
+        elements: [
+          {
+            type: "mrkdwn",
+            text: `Event ID: \`${event.id}\` | ${event.received_at} | <https://webhook-hub.noahpilkington98.workers.dev/dashboard|View Dashboard>`,
+          },
+        ],
+      },
+      { type: "divider" },
+    ],
+  };
 }
 
 async function forwardToEmail(

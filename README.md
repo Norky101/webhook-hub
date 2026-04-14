@@ -322,10 +322,15 @@ curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/forwarding \
   -H "Content-Type: application/json" \
   -d '{"tenant_id":"acme_corp","name":"Ops alerts","destination_type":"email","destination":"ops@acme.com","provider_filter":"pagerduty","severity_filter":"critical"}'
 
-# Forward all events to a Slack webhook
+# Forward all events to Slack (auto-formats as rich Slack blocks)
 curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/forwarding \
   -H "Content-Type: application/json" \
-  -d '{"tenant_id":"acme_corp","name":"Slack feed","destination_type":"webhook","destination":"https://hooks.slack.com/services/xxx"}'
+  -d '{"tenant_id":"acme_corp","name":"Slack feed","destination_type":"slack","destination":"https://hooks.slack.com/services/xxx"}'
+
+# Forward to any webhook URL (raw JSON)
+curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/forwarding \
+  -H "Content-Type: application/json" \
+  -d '{"tenant_id":"acme_corp","name":"Custom API","destination_type":"webhook","destination":"https://your-api.com/webhook"}'
 ```
 
 **`POST /api/forwarding/test/:tenant_id`** — Send a test notification through all active rules

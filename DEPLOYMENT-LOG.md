@@ -120,6 +120,14 @@ Claude Code (CLI) — Claude Opus, max effort. Used for architecture, code gener
 - Added POST /api/forwarding/test/:tenant_id for testing delivery
 - Updated README, DECISIONS.md (#14 auth deferral, #15 forwarding), deployment log
 
+### Session 12 — Slack Integration + Connections Vision (15:30–16:00)
+- Slack message formatter: auto-detects Slack webhook URLs, sends rich Block Kit messages
+- Added "slack" as a distinct destination type alongside email and webhook
+- Dashboard forwarding UI updated with Slack option and dynamic placeholders
+- Documented cross-tool correlation vision in DECISIONS.md (#17)
+- Product roadmap: connections page, remediation actions, cross-tool patterns
+- **Commit:** `Phase 11: Slack integration + cross-tool correlation vision`
+
 ---
 
 ## Process Notes

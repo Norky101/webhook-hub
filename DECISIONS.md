@@ -123,6 +123,27 @@ The schema is designed for it (D1 supports the users/sessions tables), the dashb
 
 **Export design:** `GET /api/export?tenant_id=X&format=csv` returns a proper file download with Content-Disposition header. Supports the same provider/status filters. CSV uses proper quoting for values containing commas. Up to 5,000 events per export.
 
+## 17. Product Vision: Cross-tool event correlation and automated remediation
+
+**The insight:** Nobody watches a dashboard all day. The real value of a webhook platform isn't monitoring — it's **connectivity** and **action**. Events should flow to where people already are (Slack, email, SMS), and when bad events happen, the system should help fix them.
+
+**Cross-tool correlation — the next evolution:**
+
+| Cross-tool pattern | What it means | Automated action |
+|---|---|---|
+| Stripe payment failed + Zendesk ticket opened | Customer is churning | Auto-escalate to retention team |
+| HubSpot deal closed + Shopify order created | New revenue confirmed | Update finance dashboard |
+| PagerDuty incident + GitHub deploy | Deploy caused an outage | Auto-rollback or alert oncall |
+| Gusto employee terminated + Intercom agent removed | Offboarding event | Trigger access revocation |
+
+No single tool sees these patterns. HubSpot doesn't know about Stripe. PagerDuty doesn't know about GitHub deploys. Webhook-hub is the only system that sees events from all providers in one timeline — which means it's the only system that can correlate across them and trigger automated responses.
+
+**What's built now:** Webhook forwarding to email and webhook URLs, configurable per provider and severity. This is the foundation — events already flow out of the platform to where people need them.
+
+**What comes next:** Connections page (toggle Slack/email/webhook/SMS on/off), Slack-formatted messages, remediation actions ("when event X happens, call API Y"), and cross-tool correlation rules ("when Stripe payment fails AND Zendesk ticket opens within 1 hour for the same customer, escalate").
+
+This is the path from "webhook monitoring tool" to "business operations automation platform."
+
 ---
 
 ## The Thinking Behind The Build
