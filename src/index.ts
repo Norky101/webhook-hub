@@ -5,13 +5,14 @@ import { generateEventId, nowISO } from "./utils";
 import { processRetryQueue, queueForRetry } from "./retry";
 import { forwardEvent } from "./forwarding";
 import { dashboardHTML } from "./dashboard";
-import { getProviderHealthScores } from "./health-scores";
+import { getProviderHealthScores, sendHealthDigest } from "./health-scores";
 import { generateWebhook, simulatorProviders } from "./simulator";
 
 /** Env bindings for Cloudflare Workers */
 export type Bindings = {
   DB: D1Database;
   RESEND_API_KEY?: string;
+  SLACK_HEALTH_WEBHOOK_URL?: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -427,6 +428,15 @@ app.get("/api/health/providers", async (c) => {
   });
 });
 
+// Manually trigger health digest (for testing)
+app.post("/api/health/digest", async (c) => {
+  if (!c.env.SLACK_HEALTH_WEBHOOK_URL) {
+    return c.json({ error: "SLACK_HEALTH_WEBHOOK_URL not configured" }, 400);
+  }
+  await sendHealthDigest(c.env.DB, c.env.SLACK_HEALTH_WEBHOOK_URL);
+  return c.json({ status: "digest_sent" });
+});
+
 // ─── Remediation Playbooks API ──────────────────────────
 
 app.get("/api/playbooks", async (c) => {
@@ -610,8 +620,15 @@ function parseEventRow(row: Record<string, unknown>) {
 export default {
   fetch: app.fetch,
 
-  // Cron trigger — fires every minute, processes retry queue
+  // Cron trigger — fires every minute
   async scheduled(event: ScheduledEvent, env: Bindings, ctx: ExecutionContext) {
+    // Process retry queue every minute
     ctx.waitUntil(processRetryQueue(env.DB));
+
+    // Send health digest to Slack every 20 minutes
+    const minute = new Date(event.scheduledTime).getMinutes();
+    if (minute % 20 === 0 && env.SLACK_HEALTH_WEBHOOK_URL) {
+      ctx.waitUntil(sendHealthDigest(env.DB, env.SLACK_HEALTH_WEBHOOK_URL));
+    }
   },
 };

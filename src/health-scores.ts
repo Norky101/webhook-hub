@@ -15,6 +15,86 @@ export interface ProviderHealth {
 }
 
 /**
+ * Send a health digest to Slack with all tenants' provider health.
+ */
+export async function sendHealthDigest(
+  db: D1Database,
+  slackUrl: string
+): Promise<void> {
+  // Get all active tenants from the last hour
+  const tenantResult = await db
+    .prepare(
+      "SELECT DISTINCT tenant_id FROM events WHERE received_at > datetime('now', '-60 minutes')"
+    )
+    .all();
+
+  const tenants = (tenantResult.results || []).map((r) => r.tenant_id as string);
+  if (tenants.length === 0) return;
+
+  const allScores: Array<{ tenant: string; scores: ProviderHealth[] }> = [];
+
+  for (const tenant of tenants) {
+    const scores = await getProviderHealthScores(db, tenant, 20);
+    if (scores.length > 0) {
+      allScores.push({ tenant, scores });
+    }
+  }
+
+  if (allScores.length === 0) return;
+
+  // Build Slack message
+  const statusEmoji: Record<string, string> = {
+    healthy: ":large_green_circle:",
+    degraded: ":warning:",
+    critical: ":red_circle:",
+    no_data: ":white_circle:",
+  };
+
+  const blocks: Record<string, unknown>[] = [
+    {
+      type: "header",
+      text: { type: "plain_text", text: "Provider Health Report (last 20 min)" },
+    },
+  ];
+
+  for (const { tenant, scores } of allScores) {
+    const lines = scores
+      .map((s) => {
+        const emoji = statusEmoji[s.status] || ":grey_question:";
+        return `${emoji} *${s.provider}* — ${s.success_rate}% (${s.processed} ok, ${s.failed} failed)`;
+      })
+      .join("\n");
+
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `*Tenant: ${tenant}*\n${lines}`,
+      },
+    });
+  }
+
+  blocks.push(
+    { type: "divider" },
+    {
+      type: "context",
+      elements: [
+        {
+          type: "mrkdwn",
+          text: `${new Date().toISOString()} | <https://webhook-hub.noahpilkington98.workers.dev/dashboard|View Dashboard>`,
+        },
+      ],
+    }
+  );
+
+  await fetch(slackUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ blocks }),
+  });
+}
+
+/**
  * Calculate health scores for all providers for a tenant.
  * Looks at events from the last hour by default.
  */
