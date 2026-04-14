@@ -162,6 +162,25 @@ This is the path from "webhook monitoring tool" to "business operations automati
 
 **Pattern matching:** Supports exact match (`incident.triggered`), wildcard (`*` matches everything), and prefix match (`incident.*` matches all incident subtypes). This means one playbook can cover an entire category of events without needing a rule per event type.
 
+## 20. Scheduled health digests: proactive monitoring over reactive dashboards
+
+**Considered:** Dashboard-only health scores (user has to look), alert-on-degradation only (reactive), or scheduled periodic digests (proactive)
+**Chose:** Scheduled digest to Slack every 20 minutes, plus dashboard health cards
+**Why:** Dashboards are pull-based — someone has to open them. Digests are push-based — the system tells you the state of the world on a schedule. An ops team that gets a health report every 20 minutes to `#provider-health-stats` builds situational awareness. They see trends: "HubSpot was 99% at 2pm, 95% at 2:20pm, 87% at 2:40pm — something is degrading." That's impossible to spot by checking a dashboard sporadically.
+
+**Implementation:** Runs on the existing 1-minute cron trigger. Every 20 minutes (minute % 20 === 0), queries all active tenants, calculates per-provider health scores for the last 20-minute window, and POSTs a formatted Slack Block Kit message to `#provider-health-stats`. Uses `SLACK_HEALTH_WEBHOOK_URL` stored as a CF Workers secret (separate from the alert webhook). Manual trigger at `POST /api/health/digest` for testing.
+
+**Example Slack message:**
+```
+Provider Health Report (last 20 min)
+
+Tenant: demo_tenant
+🟢 hubspot — 100% (12 ok, 0 failed)
+🟢 shopify — 100% (8 ok, 0 failed)
+⚠️ pagerduty — 75% (6 ok, 2 failed)
+🔴 zendesk — 40% (2 ok, 3 failed)
+```
+
 ---
 
 ## The Thinking Behind The Build
@@ -200,19 +219,28 @@ This project was built entirely using Claude Code as the primary development too
 
 ## What I'd Do Differently With More Time
 
-**48 hours:**
+**Already built (was in the "more time" list, shipped anyway):**
+- ~~Dashboard: event search/filter, chart type toggle~~ → Done (Sprint 1)
+- ~~Webhook forwarding to Slack, email, webhook URLs~~ → Done (Phase 10-11)
+- ~~Provider health scoring~~ → Done (Phase 13-14, with scheduled Slack digest)
+- ~~Extra credit providers~~ → Done (8 total: +Salesforce, PagerDuty, Zendesk)
+- ~~Remediation playbooks~~ → Done (Phase 12)
+
+**Next 48 hours:**
 - Enforce signature validation with a tenant secret store (Workers KV)
 - Add rate limiting per tenant (prevent webhook flooding)
-- Auth on the REST API (API keys or JWT)
-- Dashboard: event search/filter, chart type toggle (bar/pie/line)
-- More extra credit providers (BambooHR, DocuSign, Notion, Datadog, Mailchimp)
+- Auth on the REST API (D1-based users/sessions, login UI)
+- SMS alerts via Twilio for critical events (wake up engineers)
+- Alerting rules engine — "notify me when error rate > 10/hour for any provider"
+- Cross-tool event correlation — detect patterns across providers
+- More providers (BambooHR, DocuSign, Notion, Datadog, Mailchimp → 13 total)
 
 **1 week:**
-- Webhook forwarding — receive, normalize, then forward to tenant-configured destinations (Slack, email, other APIs)
+- Stripe billing integration — tiered pricing (Free/Pro/Business/Enterprise)
+- Tenant onboarding UI — self-service provider setup, secret configuration
+- Connections page — toggle Slack/email/webhook/SMS on/off per tenant
+- Automated remediation actions — "when event X happens, call API Y"
 - Real-time dashboard via WebSocket or SSE instead of 30s polling
-- Tenant onboarding UI — self-service provider setup, secret configuration, webhook URL generation
-- Alerting rules engine — "notify me when error rate > 10/hour for any provider"
-- Provider health scoring — track per-provider error rates, surface degrading integrations
 
 **Production:**
 - Move from D1 to Durable Objects for real-time state where latency matters

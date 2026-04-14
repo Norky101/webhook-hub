@@ -283,6 +283,16 @@ Response:
 
 ---
 
+**`POST /api/health/digest`** — Manually trigger health digest to Slack
+
+```bash
+curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/health/digest
+```
+
+Automatically runs every 20 minutes via cron trigger to `#provider-health-stats`.
+
+---
+
 **`GET /api/retries?tenant_id=X`** — View retry queue
 
 **`GET /api/dead-letter?tenant_id=X`** — View dead letter queue
