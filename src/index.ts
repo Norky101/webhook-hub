@@ -406,6 +406,26 @@ app.delete("/api/forwarding/:id", async (c) => {
   return c.json({ status: "deleted" });
 });
 
+// Test forwarding — sends a test event through all active rules for the tenant
+app.post("/api/forwarding/test/:tenant_id", async (c) => {
+  const { tenant_id } = c.req.param();
+  const testEvent = {
+    id: "evt_test",
+    tenant_id,
+    provider: "system",
+    event_type: "forwarding.test",
+    severity: "critical" as const,
+    summary: "Test notification from Webhook Hub — forwarding is working!",
+    raw_payload: { test: true },
+    received_at: new Date().toISOString(),
+    processed_at: new Date().toISOString(),
+    status: "processed" as const,
+  };
+
+  const result = await forwardEvent(c.env.DB, testEvent, c.env.RESEND_API_KEY);
+  return c.json({ status: "test_sent", ...result });
+});
+
 // ─── Data Export ────────────────────────────────────────
 
 app.get("/api/export", async (c) => {

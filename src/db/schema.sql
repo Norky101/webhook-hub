@@ -37,6 +37,21 @@ CREATE TABLE IF NOT EXISTS retry_queue (
 
 CREATE INDEX IF NOT EXISTS idx_retry_next ON retry_queue(next_retry_at);
 
+-- Forwarding rules — where to send normalized events
+CREATE TABLE IF NOT EXISTS forwarding_rules (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id TEXT NOT NULL,
+  name TEXT NOT NULL DEFAULT '',
+  destination_type TEXT NOT NULL, -- 'webhook', 'email'
+  destination TEXT NOT NULL, -- URL or email address
+  provider_filter TEXT, -- NULL = all providers, or specific provider name
+  severity_filter TEXT, -- NULL = all, or 'warning', 'error', 'critical'
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_forwarding_tenant ON forwarding_rules(tenant_id, active);
+
 -- Dead letter queue — events that exhausted all retries
 CREATE TABLE IF NOT EXISTS dead_letter (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

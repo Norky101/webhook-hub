@@ -254,6 +254,54 @@ export function dashboardHTML(): string {
     </div>
   </div>
 
+  <div class="section">
+    <h2 class="collapsible" onclick="toggleSection('forwarding')"><span class="arrow open" id="arrow-forwarding">&#9654;</span> Webhook Forwarding</h2>
+    <div class="collapsible-content" id="section-forwarding">
+      <p style="font-size:12px; color:#8b949e; margin-bottom:12px;">Forward normalized events to email or webhook URLs. Rules apply to all incoming webhooks for this tenant.</p>
+      <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+        <input type="text" id="fwd-name" placeholder="Rule name (e.g. Ops alerts)" style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:6px 10px; border-radius:6px; font-size:12px; width:150px;">
+        <select id="fwd-type" style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:6px 10px; border-radius:6px; font-size:12px;">
+          <option value="email">Email</option>
+          <option value="webhook">Webhook URL</option>
+        </select>
+        <input type="text" id="fwd-dest" placeholder="email@example.com or https://..." style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:6px 10px; border-radius:6px; font-size:12px; flex:1; min-width:200px;">
+        <select id="fwd-provider" style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:6px 10px; border-radius:6px; font-size:12px;">
+          <option value="">All providers</option>
+          <option value="hubspot">HubSpot</option>
+          <option value="shopify">Shopify</option>
+          <option value="linear">Linear</option>
+          <option value="intercom">Intercom</option>
+          <option value="gusto">Gusto</option>
+          <option value="salesforce">Salesforce</option>
+          <option value="pagerduty">PagerDuty</option>
+          <option value="zendesk">Zendesk</option>
+        </select>
+        <select id="fwd-severity" style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:6px 10px; border-radius:6px; font-size:12px;">
+          <option value="">All severities</option>
+          <option value="warning">Warning+</option>
+          <option value="error">Error+</option>
+          <option value="critical">Critical only</option>
+        </select>
+        <button onclick="addForwardingRule()" style="background:#238636; color:white; border:none; padding:6px 14px; border-radius:6px; cursor:pointer; font-size:12px;">Add Rule</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Destination</th>
+            <th>Provider</th>
+            <th>Severity</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="forwarding-table">
+          <tr><td colspan="6" class="empty">No forwarding rules</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 <script>
 const PROVIDER_COLORS = {
   hubspot: '#ff7a59',
@@ -400,6 +448,7 @@ async function loadDashboard() {
 
   // Schedule next refresh
   if (refreshTimer) clearTimeout(refreshTimer);
+  loadForwardingRules();
   refreshTimer = setTimeout(loadDashboard, 30000);
 }
 
@@ -486,6 +535,64 @@ function setChart(type) {
     active.style.borderColor = '#484f58';
   }
   renderProviderChart();
+}
+
+async function loadForwardingRules() {
+  const tenant = document.getElementById('tenant-input').value.trim();
+  if (!tenant) return;
+  try {
+    const data = await api('/api/forwarding?tenant_id=' + tenant);
+    const table = document.getElementById('forwarding-table');
+    const rules = data.rules || [];
+    if (rules.length === 0) {
+      table.innerHTML = '<tr><td colspan="6" class="empty">No forwarding rules — add one above</td></tr>';
+    } else {
+      table.innerHTML = rules.map(r =>
+        '<tr>'
+        + '<td>' + esc(r.name || '(unnamed)') + '</td>'
+        + '<td>' + r.destination_type + '</td>'
+        + '<td style="font-size:12px;word-break:break-all;">' + esc(r.destination) + '</td>'
+        + '<td>' + (r.provider_filter || 'all') + '</td>'
+        + '<td>' + (r.severity_filter || 'all') + '</td>'
+        + '<td><button onclick="deleteRule(' + r.id + ')" style="background:#3d1418;color:#f85149;border:1px solid #f85149;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">Delete</button></td>'
+        + '</tr>'
+      ).join('');
+    }
+  } catch (err) { /* ignore */ }
+}
+
+async function addForwardingRule() {
+  const tenant = document.getElementById('tenant-input').value.trim();
+  if (!tenant) { alert('Enter a tenant ID first'); return; }
+  const name = document.getElementById('fwd-name').value.trim();
+  const destType = document.getElementById('fwd-type').value;
+  const dest = document.getElementById('fwd-dest').value.trim();
+  const provider = document.getElementById('fwd-provider').value;
+  const severity = document.getElementById('fwd-severity').value;
+  if (!dest) { alert('Enter a destination (email or URL)'); return; }
+
+  try {
+    await fetch(BASE + '/api/forwarding', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tenant_id: tenant,
+        name: name,
+        destination_type: destType,
+        destination: dest,
+        provider_filter: provider || undefined,
+        severity_filter: severity || undefined,
+      }),
+    });
+    document.getElementById('fwd-name').value = '';
+    document.getElementById('fwd-dest').value = '';
+    loadForwardingRules();
+  } catch (err) { alert('Error: ' + err.message); }
+}
+
+async function deleteRule(id) {
+  await fetch(BASE + '/api/forwarding/' + id, { method: 'DELETE' });
+  loadForwardingRules();
 }
 
 function applyFilters() {

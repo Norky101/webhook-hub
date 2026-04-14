@@ -105,6 +105,21 @@ Claude Code (CLI) — Claude Opus, max effort. Used for architecture, code gener
 - Updated README, DECISIONS.md (#14), deployment log
 - **Commits:** `Sprint 1: search, export, chart toggle`
 
+### Session 11 — Webhook Forwarding + Root Redirect (14:45–15:05)
+- Root URL `/` now redirects to dashboard (Aaron lands on the product, not JSON)
+- Built webhook forwarding engine: forward normalized events to email or webhook URLs
+- `forwarding_rules` D1 table with provider and severity filters
+- Dashboard UI: add/view/delete forwarding rules from the Webhook Forwarding section
+- Email forwarding sends styled HTML via Resend API
+- Webhook forwarding POSTs normalized JSON with custom headers
+- Forwarding runs in background via `waitUntil()` — doesn't slow down the 200 response
+- CRUD API: GET/POST/DELETE `/api/forwarding`
+- Wired Resend API key as Cloudflare Workers secret (encrypted, not in code)
+- Fixed severity filter to work as "this level and above" (warning matches warning+error+critical)
+- Verified end-to-end: simulated webhook → forwarding rule → styled HTML email delivered
+- Added POST /api/forwarding/test/:tenant_id for testing delivery
+- Updated README, DECISIONS.md (#14 auth deferral, #15 forwarding), deployment log
+
 ---
 
 ## Process Notes

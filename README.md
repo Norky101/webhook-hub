@@ -308,6 +308,36 @@ Simulated events go through the **real pipeline** — normalization, D1 storage,
 
 ---
 
+### Webhook Forwarding
+
+Forward normalized events to email or webhook URLs. Configure rules from the dashboard or API.
+
+**`GET /api/forwarding?tenant_id=X`** — List forwarding rules
+
+**`POST /api/forwarding`** — Create a rule
+
+```bash
+# Forward all critical PagerDuty events to email
+curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/forwarding \
+  -H "Content-Type: application/json" \
+  -d '{"tenant_id":"acme_corp","name":"Ops alerts","destination_type":"email","destination":"ops@acme.com","provider_filter":"pagerduty","severity_filter":"critical"}'
+
+# Forward all events to a Slack webhook
+curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/forwarding \
+  -H "Content-Type: application/json" \
+  -d '{"tenant_id":"acme_corp","name":"Slack feed","destination_type":"webhook","destination":"https://hooks.slack.com/services/xxx"}'
+```
+
+**`POST /api/forwarding/test/:tenant_id`** — Send a test notification through all active rules
+
+```bash
+curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/forwarding/test/acme_corp
+```
+
+**`DELETE /api/forwarding/:id`** — Delete a rule
+
+---
+
 ### Data Export
 
 **`GET /api/export?tenant_id=X&format=csv`** — Export events as CSV or JSON
@@ -350,6 +380,7 @@ src/
   utils.ts          — HMAC, timing-safe compare, ID generation
   retry.ts          — Retry engine with exponential backoff
   simulator.ts      — Webhook simulator for demos and testing
+  forwarding.ts     — Webhook forwarding engine (email + webhook URLs)
   dashboard.ts      — HTML dashboard template
   db/
     schema.sql      — D1 schema (events, retry_queue, dead_letter)

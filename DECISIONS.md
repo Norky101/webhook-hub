@@ -109,7 +109,9 @@ The schema is designed for it (D1 supports the users/sessions tables), the dashb
 
 **Severity filtering:** Rules use "this level and above" logic — a `warning` filter matches warning, error, and critical events. This prevents missed alerts: if you care about warnings, you definitely care about errors. Severity levels: info (0) < warning (1) < error (2) < critical (3).
 
-**Email delivery:** Uses Resend API with the API key stored as a Cloudflare Workers secret (`RESEND_API_KEY`). The key never appears in code or git — it's encrypted in Cloudflare's secret store and only accessible at runtime.
+**Email delivery:** Uses Resend API with the API key stored as a Cloudflare Workers secret (`RESEND_API_KEY`). The key never appears in code or git — it's encrypted in Cloudflare's secret store and only accessible at runtime. Emails are styled HTML with dark theme matching the dashboard — provider, event type, severity badge, summary, tenant, timestamp, and event ID. Verified working end-to-end: simulated webhook → normalization → forwarding rule match → Resend API → email delivered.
+
+**Test endpoint:** `POST /api/forwarding/test/:tenant_id` sends a test event through all active rules for a tenant. Useful for verifying email delivery and webhook URL connectivity without sending a real webhook.
 
 ## 16. Sprint 1: Search, export, chart toggle — visible features first
 
