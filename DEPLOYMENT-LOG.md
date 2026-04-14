@@ -6,7 +6,7 @@ How I built webhook-hub in 24 hours using Claude Code as my primary development 
 
 ## Tool
 
-Claude Code (CLI) — Claude Opus, max effort. Used for architecture, code generation, deployment, testing, and spec auditing. I drove prioritization, scope decisions, and deployment sequencing.
+Claude Code (CLI) — Claude Opus, max effort. (Upgraded to the $100 subscription for this project lol) Used for architecture, code generation, deployment, testing, and spec auditing. I drove prioritization, scope decisions, and deployment sequencing.
 
 ---
 
@@ -71,27 +71,20 @@ Claude Code (CLI) — Claude Opus, max effort. Used for architecture, code gener
 - Wired `POST /api/simulate/:provider/:tenant_id?count=N` endpoint
 - Sends simulated webhooks through the real pipeline (normalization, D1, dashboard)
 - Tested live: single events, burst mode, all providers
-- Populated demo_tenant with simulated events across all providers
-- Updated README with simulator docs, DECISIONS.md with "One More Thing" rationale
 - **Commit:** `Phase 8: webhook simulator`
 
 ### Session 8 — Dashboard UX Polish (13:00–13:15)
 - Dashboard auto-loads demo_tenant by default (no blank screen on first visit)
 - Added "Simulate Webhook" button directly in the dashboard UI
-- Added "All Providers" option to the dropdown (sends 40 events across all 8 in one click)
+- Added "All Providers" option to the dropdown
 - Added explainer text so visitors immediately understand what they're looking at
-- Improved tenant input placeholder to explain what to enter
 - **Commit:** `Dashboard UX: auto-load demo tenant, simulate buttons, explainer text`
 
-### Session 9 — Extra Credit Providers + Dashboard Polish (13:15–13:40)
+### Session 9 — Extra Credit Providers (13:15–13:40)
 - Added 3 extra credit providers: Salesforce, PagerDuty, Zendesk (8 total)
-- Each stamped out in ~10 minutes using the registry pattern — proving the framework scales
+- Each stamped out in ~10 minutes using the registry pattern
 - Added all 3 to simulator with realistic payloads
-- Updated dashboard dropdown, provider colors, and "All Providers" burst
 - Made all dashboard sections collapsible (click to expand/collapse)
-- Clarified tenant input UX — any name creates an isolated workspace
-- Updated DECISIONS.md with decisions #12 and #13
-- Updated tests to verify all 8 providers registered
 - **Commits:** `Phase 9: extra credit providers` + dashboard UX commits
 
 ### Session 10 — Sprint 1: Search, Export, Chart Toggle (13:40–14:15)
@@ -99,67 +92,47 @@ Claude Code (CLI) — Claude Opus, max effort. Used for architecture, code gener
 - Built `GET /api/export?tenant_id=X&format=csv|json` endpoint for data export
 - Added CSV and JSON export buttons to dashboard
 - Added bar/pie chart toggle for Events by Provider section
-- Pie chart renders as SVG with provider-colored slices and legend
-- Enter key triggers search, filters apply server-side (provider, status) and client-side (severity, text search)
-- Fixed time search to handle browser locale differences (non-breaking spaces, 12h/24h formats)
-- Updated README, DECISIONS.md (#14), deployment log
-- **Commits:** `Sprint 1: search, export, chart toggle`
+- Fixed time search to handle browser locale differences
+- **Commit:** `Sprint 1: search, export, chart toggle`
 
-### Session 11 — Webhook Forwarding + Root Redirect (14:45–15:05)
-- Root URL `/` now redirects to dashboard (Aaron lands on the product, not JSON)
-- Built webhook forwarding engine: forward normalized events to email or webhook URLs
+### Session 11 — Webhook Forwarding + Slack (14:45–16:30)
+- Built webhook forwarding engine: forward events to email, Slack, or webhook URLs
 - `forwarding_rules` D1 table with provider and severity filters
-- Dashboard UI: add/view/delete forwarding rules from the Webhook Forwarding section
-- Email forwarding sends styled HTML via Resend API
-- Webhook forwarding POSTs normalized JSON with custom headers
-- Forwarding runs in background via `waitUntil()` — doesn't slow down the 200 response
-- CRUD API: GET/POST/DELETE `/api/forwarding`
-- Wired Resend API key as Cloudflare Workers secret (encrypted, not in code)
-- Fixed severity filter to work as "this level and above" (warning matches warning+error+critical)
-- Verified end-to-end: simulated webhook → forwarding rule → styled HTML email delivered
-- Added POST /api/forwarding/test/:tenant_id for testing delivery
-- Updated README, DECISIONS.md (#14 auth deferral, #15 forwarding), deployment log
+- Dashboard UI to add/view/delete forwarding rules
+- Email forwarding via Resend API — styled HTML, verified end-to-end
+- Slack integration: auto-detects Slack URLs, sends rich Block Kit messages
+- Root URL `/` now redirects to dashboard
+- Fixed severity filter to work as "this level and above"
+- **Commits:** `Phase 10` through `Phase 11`
 
-### Session 12 — Slack Integration + Connections Vision (15:30–16:30)
-- Slack message formatter: auto-detects Slack webhook URLs, sends rich Block Kit messages
-- Added "slack" as a distinct destination type alongside email and webhook
-- Dashboard forwarding UI updated with Slack option and dynamic placeholders
-- Documented cross-tool correlation vision in DECISIONS.md (#17)
-- Product roadmap: connections page, remediation actions, cross-tool patterns
-- **Commit:** `Phase 11: Slack integration + cross-tool correlation vision`
-
-### Session 13 — Remediation Playbooks (16:30–17:05)
+### Session 12 — Remediation Playbooks (16:30–17:05)
 - Built remediation engine: match events against playbooks with wildcard patterns
 - Remediation steps automatically included in Slack messages and emails
-- Slack shows "Remediation Steps" section with numbered steps
-- Email shows orange-highlighted remediation box
 - CRUD API: GET/POST/DELETE /api/playbooks
-- Pattern matching supports exact, wildcard (*), and prefix (incident.*)
+- Pattern matching: exact, wildcard (*), and prefix (incident.*)
 - **Commit:** `Phase 12: remediation playbooks`
 
-### Session 14 — Provider Health Scores (17:05–17:15)
-- Per-provider success/error rates calculated from events table (last 1hr window)
-- Dashboard: health score cards with color-coded status (green/yellow/red)
-- Shows success rate %, processed/failed counts, and status per provider
-- API: GET /api/health/providers?tenant_id=X&window=60
-- Overall status: healthy/degraded/critical based on worst provider
-- **Commit:** `Phase 13: provider health scores`
+### Session 13 — Provider Health Scores (17:05–17:25)
+- Per-provider success/error rates calculated from events table
+- Dashboard: color-coded health cards (green/yellow/red)
+- API: GET /api/health/providers?tenant_id=X
+- Scheduled health digest to Slack #provider-health-stats every 20 min
+- Manual trigger: POST /api/health/digest
+- **Commits:** `Phase 13` + `Phase 14: health digest`
 
-### Session 15 — Health Digest to Slack (17:15–17:25)
-- Health digest: sends per-provider health report to Slack #provider-health-stats every 20 min
-- Runs on existing cron trigger (fires every minute, digest on minute % 20 === 0)
-- Shows all tenants' provider health with emoji status indicators
-- Manual trigger: POST /api/health/digest for testing
-- SLACK_HEALTH_WEBHOOK_URL stored as CF Workers secret
-- **Commit:** `Phase 14: health digest to Slack every 20min`
-
-### Session 16 — Twilio SMS + Voice Call Alerts (17:25–17:40)
-- SMS forwarding via Twilio: sends text with event details + first 3 remediation steps
-- Voice call forwarding via Twilio: phone rings, AI voice reads the alert summary
-- Both use Twilio credentials stored as CF Workers secrets (SID, token, from number)
+### Session 14 — Twilio SMS + Voice Call Alerts (17:25–17:50)
+- SMS forwarding via Twilio: text with event summary + remediation steps
+- Voice call forwarding via Twilio: phone rings, AI voice reads the alert
+- 5 forwarding channels total: email, Slack, SMS, voice call, webhook URL
+- All Twilio credentials stored as CF Workers secrets
 - Dashboard forwarding UI updated with SMS and Voice Call options
-- 5 forwarding channels now supported: email, Slack, SMS, voice call, webhook URL
 - **Commit:** `Phase 15: Twilio SMS + voice call alerts`
+
+### Session 15 — DECISIONS.md Rewrite (17:50–18:00)
+- Restructured from to-do list into pure decision-making document
+- 17 decisions across Architecture, Tradeoffs, and Product Thinking
+- Elevated Twilio SMS/voice to standalone decision with escalation ladder
+- **Commit:** `Phase 15b: DECISIONS.md rewrite`
 
 ---
 
@@ -169,11 +142,12 @@ Claude Code (CLI) — Claude Opus, max effort. Used for architecture, code gener
 - **Breadth first, then depth.** Got all core features working before polishing any single one. The spec rewards completion over perfection.
 - **Claude generated, I steered.** Claude wrote the normalizer files, test suite, and dashboard. I made the architecture decisions, set the build order, and enforced the "deploy early, deploy often" cadence.
 - **Spec-driven development.** Used Claude to audit the eval spec against the codebase after each phase, catching gaps before they became problems.
+- **Kept building past the spec.** After completing all eval requirements, continued building business features: forwarding engine, Slack/email/SMS/voice integration, remediation playbooks, health scoring. Velocity didn't stop at "done."
 
 ---
 
 ## Sessions with Claude
 
-- **Total sessions:** 2 (1 initial scaffold session, 1 long build session)
+- **Total sessions:** 2 (1 initial scaffold session, 1 long continuous build session)
 - **Primary tool:** Claude Code CLI (Opus, max effort)
 - **Workflow:** Feed spec → plan phase → build → deploy → verify live → commit → next phase
