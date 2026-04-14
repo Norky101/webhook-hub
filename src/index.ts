@@ -341,6 +341,56 @@ app.get("/api/dead-letter", async (c) => {
   return c.json({ dead_letters: result.results || [] });
 });
 
+// ─── Data Export ────────────────────────────────────────
+
+app.get("/api/export", async (c) => {
+  const tenant_id = c.req.query("tenant_id");
+  if (!tenant_id) return c.json({ error: "tenant_id is required" }, 400);
+
+  const format = c.req.query("format") || "json";
+  const provider = c.req.query("provider");
+  const status = c.req.query("status");
+  const limit = Math.min(parseInt(c.req.query("limit") || "1000"), 5000);
+
+  let query = "SELECT * FROM events WHERE tenant_id = ?";
+  const params: unknown[] = [tenant_id];
+
+  if (provider) {
+    query += " AND provider = ?";
+    params.push(provider);
+  }
+  if (status) {
+    query += " AND status = ?";
+    params.push(status);
+  }
+
+  query += " ORDER BY received_at DESC LIMIT ?";
+  params.push(limit);
+
+  const result = await c.env.DB.prepare(query).bind(...params).all();
+  const events = (result.results || []).map(parseEventRow);
+
+  if (format === "csv") {
+    const headers = ["id", "tenant_id", "provider", "event_type", "severity", "summary", "status", "received_at", "processed_at"];
+    const csvRows = [headers.join(",")];
+    for (const e of events) {
+      const row = headers.map((h) => {
+        const val = String((e as Record<string, unknown>)[h] || "");
+        return '"' + val.replace(/"/g, '""') + '"';
+      });
+      csvRows.push(row.join(","));
+    }
+    return new Response(csvRows.join("\n"), {
+      headers: {
+        "Content-Type": "text/csv",
+        "Content-Disposition": `attachment; filename="webhook-hub-${tenant_id}-export.csv"`,
+      },
+    });
+  }
+
+  return c.json({ tenant_id, count: events.length, events });
+});
+
 // ─── Webhook Simulator ("One More Thing") ──────────────
 
 // Simulate a single webhook or a burst

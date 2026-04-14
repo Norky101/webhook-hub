@@ -91,6 +91,16 @@ Documenting every meaningful decision made during the build — what was conside
 **Chose:** Interactive dashboard that works out of the box
 **Why:** The spec says "something an ops person can glance at and immediately know if things are healthy or on fire." That means zero-friction: auto-loads a default tenant, simulate button right in the UI, collapsible sections so users control information density. Every UX decision was filtered through "would Aaron open this and immediately understand what's happening?"
 
+## 14. Sprint 1: Search, export, chart toggle — visible features first
+
+**Considered:** Building auth and Stripe first (infrastructure), or building visible dashboard features first
+**Chose:** Dashboard features: event search/filter, CSV/JSON export, bar/pie chart toggle
+**Why:** Auth is invisible plumbing. Search, export, and chart toggle are things the evaluator can interact with when they open the dashboard. Build what the user can see first, infrastructure second. A dashboard with search and export is more impressive than invisible middleware.
+
+**Search design:** The search bar matches against every visible field — provider, event type, severity, status, summary, event ID, and time. Time search works with both 12h format (`1:29:15 PM`) and 24h format (`13:29:15`), plus ISO timestamps (`2026-04-14`). Handles browser locale differences by normalizing whitespace (browsers insert non-breaking spaces before AM/PM). Filters combine: provider and status filter server-side via the API, severity and text search filter client-side for instant feedback.
+
+**Export design:** `GET /api/export?tenant_id=X&format=csv` returns a proper file download with Content-Disposition header. Supports the same provider/status filters. CSV uses proper quoting for values containing commas. Up to 5,000 events per export.
+
 ---
 
 ## The Thinking Behind The Build

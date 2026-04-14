@@ -166,8 +166,46 @@ export function dashboardHTML(): string {
     </div>
   </div>
 
+  <div class="filters" style="display:flex; gap:10px; align-items:center; margin-bottom:20px; flex-wrap:wrap;">
+    <input type="text" id="search-input" placeholder="Search events — type a keyword, event ID, or provider..." style="flex:1; min-width:200px; background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:8px 12px; border-radius:6px; font-size:13px;">
+    <select id="filter-provider" style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:8px 12px; border-radius:6px; font-size:13px;">
+      <option value="">All providers</option>
+      <option value="hubspot">HubSpot</option>
+      <option value="shopify">Shopify</option>
+      <option value="linear">Linear</option>
+      <option value="intercom">Intercom</option>
+      <option value="gusto">Gusto</option>
+      <option value="salesforce">Salesforce</option>
+      <option value="pagerduty">PagerDuty</option>
+      <option value="zendesk">Zendesk</option>
+    </select>
+    <select id="filter-severity" style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:8px 12px; border-radius:6px; font-size:13px;">
+      <option value="">All severities</option>
+      <option value="info">Info</option>
+      <option value="warning">Warning</option>
+      <option value="error">Error</option>
+      <option value="critical">Critical</option>
+    </select>
+    <select id="filter-status" style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:8px 12px; border-radius:6px; font-size:13px;">
+      <option value="">All statuses</option>
+      <option value="processed">Processed</option>
+      <option value="failed">Failed</option>
+      <option value="retrying">Retrying</option>
+      <option value="dead_letter">Dead Letter</option>
+    </select>
+    <button onclick="applyFilters()" style="background:#238636; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:13px;">Filter</button>
+    <button onclick="exportData('csv')" style="background:#30363d; color:#e1e4e8; border:1px solid #484f58; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px;">Export CSV</button>
+    <button onclick="exportData('json')" style="background:#30363d; color:#e1e4e8; border:1px solid #484f58; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px;">Export JSON</button>
+  </div>
+
   <div class="section">
-    <h2 class="collapsible" onclick="toggleSection('providers')"><span class="arrow open" id="arrow-providers">&#9654;</span> Events by Provider</h2>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2 class="collapsible" onclick="toggleSection('providers')"><span class="arrow open" id="arrow-providers">&#9654;</span> Events by Provider</h2>
+      <div style="display:flex; gap:4px;">
+        <button onclick="setChart('bar')" id="chart-bar" class="chart-toggle active" style="background:#30363d; color:#e1e4e8; border:1px solid #484f58; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:11px;">Bar</button>
+        <button onclick="setChart('pie')" id="chart-pie" class="chart-toggle" style="background:#161b22; color:#8b949e; border:1px solid #30363d; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:11px;">Pie</button>
+      </div>
+    </div>
     <div class="collapsible-content" id="section-providers">
       <div class="provider-bars" id="provider-bars">
         <div class="empty">Enter a tenant ID above</div>
@@ -229,6 +267,8 @@ const PROVIDER_COLORS = {
 };
 const BASE = location.origin;
 let refreshTimer = null;
+let currentChart = 'bar';
+let lastProviderData = [];
 
 async function api(path) {
   const res = await fetch(BASE + path);
@@ -244,11 +284,19 @@ async function loadDashboard() {
   banner.style.display = 'none';
 
   try {
+    // Build filtered events URL
+    const filterProvider = document.getElementById('filter-provider').value;
+    const filterSeverity = document.getElementById('filter-severity').value;
+    const filterStatus = document.getElementById('filter-status').value;
+    let eventsUrl = '/api/events?tenant_id=' + tenant + '&limit=50';
+    if (filterProvider) eventsUrl += '&provider=' + filterProvider;
+    if (filterStatus) eventsUrl += '&status=' + filterStatus;
+
     // Fetch health, stats, events, failures in parallel
     const [health, stats, events, failures] = await Promise.all([
       api('/api/health'),
       api('/api/stats?tenant_id=' + tenant),
-      api('/api/events?tenant_id=' + tenant + '&limit=20'),
+      api(eventsUrl),
       api('/api/events?tenant_id=' + tenant + '&status=failed&limit=10'),
     ]);
 
@@ -282,28 +330,37 @@ async function loadDashboard() {
     dlEl.textContent = dlCount ? dlCount.count : '0';
     dlEl.className = 'value ' + (dlCount && dlCount.count > 0 ? 'red' : 'green');
 
-    // Provider bars
-    const providerBars = document.getElementById('provider-bars');
-    const byProvider = stats.by_provider || [];
-    const maxCount = Math.max(...byProvider.map(p => p.count), 1);
-    if (byProvider.length === 0) {
-      providerBars.innerHTML = '<div class="empty">No events for this tenant</div>';
-    } else {
-      providerBars.innerHTML = byProvider.map(p => {
-        const pct = Math.max((p.count / maxCount) * 100, 2);
-        const color = PROVIDER_COLORS[p.provider] || '#8b949e';
-        return '<div class="bar-row">'
-          + '<span class="bar-label">' + p.provider + '</span>'
-          + '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + color + '">' + p.count + '</div></div>'
-          + '</div>';
-      }).join('');
-    }
+    // Provider chart — store data for chart toggle
+    lastProviderData = stats.by_provider || [];
+    renderProviderChart();
 
-    // Events table
+    // Events table — apply client-side search + severity filter
     const eventsTable = document.getElementById('events-table');
-    const evts = events.events || [];
+    const searchTerm = (document.getElementById('search-input').value || '').toLowerCase().trim();
+    let evts = events.events || [];
+    if (filterSeverity) evts = evts.filter(e => e.severity === filterSeverity);
+    if (searchTerm) {
+      // Normalize search: strip non-breaking spaces, normalize whitespace
+      const normSearch = searchTerm.replace(/\s+/g, ' ');
+      evts = evts.filter(e => {
+        const timeStr = fmtTime(e.received_at).toLowerCase().replace(/\s+/g, ' ');
+        const isoStr = (e.received_at || '').toLowerCase();
+        // Also format as 24h for matching
+        const d = e.received_at ? new Date(e.received_at) : null;
+        const h24 = d ? (d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0')) : '';
+        return (e.id || '').toLowerCase().includes(normSearch) ||
+          (e.provider || '').toLowerCase().includes(normSearch) ||
+          (e.event_type || '').toLowerCase().includes(normSearch) ||
+          (e.summary || '').toLowerCase().includes(normSearch) ||
+          (e.severity || '').toLowerCase().includes(normSearch) ||
+          (e.status || '').toLowerCase().includes(normSearch) ||
+          isoStr.includes(normSearch) ||
+          timeStr.includes(normSearch) ||
+          h24.includes(normSearch);
+      });
+    }
     if (evts.length === 0) {
-      eventsTable.innerHTML = '<tr><td colspan="6" class="empty">No events</td></tr>';
+      eventsTable.innerHTML = '<tr><td colspan="6" class="empty">' + (searchTerm ? 'No events matching "' + esc(searchTerm) + '"' : 'No events') + '</td></tr>';
     } else {
       eventsTable.innerHTML = evts.map(e =>
         '<tr>'
@@ -360,6 +417,92 @@ function esc(s) {
   return d.innerHTML;
 }
 
+function renderProviderChart() {
+  const container = document.getElementById('provider-bars');
+  const data = lastProviderData;
+  if (data.length === 0) {
+    container.innerHTML = '<div class="empty">No events for this tenant</div>';
+    return;
+  }
+  if (currentChart === 'pie') {
+    renderPieChart(container, data);
+  } else {
+    renderBarChart(container, data);
+  }
+}
+
+function renderBarChart(container, data) {
+  const maxCount = Math.max(...data.map(p => p.count), 1);
+  container.innerHTML = data.map(p => {
+    const pct = Math.max((p.count / maxCount) * 100, 2);
+    const color = PROVIDER_COLORS[p.provider] || '#8b949e';
+    return '<div class="bar-row">'
+      + '<span class="bar-label">' + p.provider + '</span>'
+      + '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + color + '">' + p.count + '</div></div>'
+      + '</div>';
+  }).join('');
+}
+
+function renderPieChart(container, data) {
+  const total = data.reduce((s, p) => s + p.count, 0);
+  const size = 180;
+  const cx = size / 2, cy = size / 2, r = 70;
+  let startAngle = 0;
+  let paths = '';
+  let legend = '';
+
+  data.forEach(p => {
+    const slice = (p.count / total) * Math.PI * 2;
+    const endAngle = startAngle + slice;
+    const x1 = cx + r * Math.cos(startAngle);
+    const y1 = cy + r * Math.sin(startAngle);
+    const x2 = cx + r * Math.cos(endAngle);
+    const y2 = cy + r * Math.sin(endAngle);
+    const largeArc = slice > Math.PI ? 1 : 0;
+    const color = PROVIDER_COLORS[p.provider] || '#8b949e';
+    paths += '<path d="M ' + cx + ' ' + cy + ' L ' + x1 + ' ' + y1 + ' A ' + r + ' ' + r + ' 0 ' + largeArc + ' 1 ' + x2 + ' ' + y2 + ' Z" fill="' + color + '" stroke="#0f1117" stroke-width="1.5"/>';
+    const pct = Math.round((p.count / total) * 100);
+    legend += '<div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:10px;height:10px;border-radius:2px;background:' + color + ';display:inline-block;"></span>' + p.provider + ' — ' + p.count + ' (' + pct + '%)</div>';
+    startAngle = endAngle;
+  });
+
+  container.innerHTML = '<div style="display:flex;align-items:center;gap:24px;">'
+    + '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">' + paths + '</svg>'
+    + '<div style="display:flex;flex-direction:column;gap:6px;">' + legend + '</div>'
+    + '</div>';
+}
+
+function setChart(type) {
+  currentChart = type;
+  document.querySelectorAll('.chart-toggle').forEach(b => {
+    b.style.background = '#161b22';
+    b.style.color = '#8b949e';
+    b.style.borderColor = '#30363d';
+  });
+  const active = document.getElementById('chart-' + type);
+  if (active) {
+    active.style.background = '#30363d';
+    active.style.color = '#e1e4e8';
+    active.style.borderColor = '#484f58';
+  }
+  renderProviderChart();
+}
+
+function applyFilters() {
+  loadDashboard();
+}
+
+function exportData(format) {
+  const tenant = document.getElementById('tenant-input').value.trim();
+  if (!tenant) { alert('Enter a tenant ID first'); return; }
+  const provider = document.getElementById('filter-provider').value;
+  const status = document.getElementById('filter-status').value;
+  let url = BASE + '/api/export?tenant_id=' + tenant + '&format=' + format;
+  if (provider) url += '&provider=' + provider;
+  if (status) url += '&status=' + status;
+  window.open(url, '_blank');
+}
+
 function toggleSection(name) {
   const content = document.getElementById('section-' + name);
   const arrow = document.getElementById('arrow-' + name);
@@ -412,6 +555,14 @@ async function simulateWebhook() {
   }
   btn.disabled = false;
 }
+
+// Enter key triggers search/filter
+document.getElementById('search-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') applyFilters();
+});
+document.getElementById('tenant-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') loadDashboard();
+});
 
 // Auto-load: URL param > default to demo_tenant
 const params = new URLSearchParams(location.search);

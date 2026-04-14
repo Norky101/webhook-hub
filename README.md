@@ -308,15 +308,35 @@ Simulated events go through the **real pipeline** — normalization, D1 storage,
 
 ---
 
+### Data Export
+
+**`GET /api/export?tenant_id=X&format=csv`** — Export events as CSV or JSON
+
+```bash
+# Export as CSV
+curl "https://webhook-hub.noahpilkington98.workers.dev/api/export?tenant_id=acme_corp&format=csv" -o events.csv
+
+# Export as JSON (default)
+curl "https://webhook-hub.noahpilkington98.workers.dev/api/export?tenant_id=acme_corp&format=json"
+
+# Export filtered
+curl "https://webhook-hub.noahpilkington98.workers.dev/api/export?tenant_id=acme_corp&format=csv&provider=hubspot&status=failed"
+```
+
+---
+
 ### Dashboard
 
 **`GET /dashboard`** — Monitoring dashboard
 
 Open in a browser: `https://webhook-hub.noahpilkington98.workers.dev/dashboard?tenant_id=acme_corp`
 
-- Events per provider bar chart
+- Events per provider chart (bar or pie — toggle in the UI)
 - Error rate, retry queue depth, dead letter count
-- Recent events and failures tables
+- Recent events and failures tables (collapsible)
+- Event search — filter by keyword, provider, severity, or status
+- CSV/JSON export buttons
+- Built-in webhook simulator
 - Auto-refreshes every 30 seconds
 
 ---

@@ -94,6 +94,17 @@ Claude Code (CLI) — Claude Opus, max effort. Used for architecture, code gener
 - Updated tests to verify all 8 providers registered
 - **Commits:** `Phase 9: extra credit providers` + dashboard UX commits
 
+### Session 10 — Sprint 1: Search, Export, Chart Toggle (13:40–14:15)
+- Added event search/filter bar to dashboard — keyword search + provider/severity/status dropdowns
+- Built `GET /api/export?tenant_id=X&format=csv|json` endpoint for data export
+- Added CSV and JSON export buttons to dashboard
+- Added bar/pie chart toggle for Events by Provider section
+- Pie chart renders as SVG with provider-colored slices and legend
+- Enter key triggers search, filters apply server-side (provider, status) and client-side (severity, text search)
+- Fixed time search to handle browser locale differences (non-breaking spaces, 12h/24h formats)
+- Updated README, DECISIONS.md (#14), deployment log
+- **Commits:** `Sprint 1: search, export, chart toggle`
+
 ---
 
 ## Process Notes
