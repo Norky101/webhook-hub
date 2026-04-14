@@ -10,6 +10,7 @@
  */
 
 import type { NormalizedEvent } from "./types";
+import { findRemediation, type RemediationMatch } from "./remediation";
 
 interface ForwardingRule {
   id: number;
@@ -44,6 +45,14 @@ export async function forwardEvent(
   const rules = (result.results || []) as unknown as ForwardingRule[];
   if (rules.length === 0) return stats;
 
+  // Look up remediation playbooks for this event
+  let remediation: RemediationMatch[] = [];
+  try {
+    remediation = await findRemediation(db, event);
+  } catch {
+    // Remediation lookup failed — continue without it
+  }
+
   const SEVERITY_LEVELS: Record<string, number> = {
     info: 0,
     warning: 1,
@@ -63,14 +72,14 @@ export async function forwardEvent(
 
     try {
       if (rule.destination_type === "webhook" || rule.destination_type === "slack") {
-        await forwardToWebhook(rule.destination, event);
+        await forwardToWebhook(rule.destination, event, remediation);
         stats.forwarded++;
       } else if (rule.destination_type === "email") {
         if (!resendApiKey) {
           stats.errors.push(`Email forwarding not configured (no API key)`);
           continue;
         }
-        await forwardToEmail(rule.destination, event, resendApiKey);
+        await forwardToEmail(rule.destination, event, resendApiKey, remediation);
         stats.forwarded++;
       }
     } catch (e) {
@@ -83,11 +92,12 @@ export async function forwardEvent(
 
 async function forwardToWebhook(
   url: string,
-  event: NormalizedEvent
+  event: NormalizedEvent,
+  remediation: RemediationMatch[] = []
 ): Promise<void> {
   // Detect Slack incoming webhooks and format as Slack blocks
   const isSlack = url.includes("hooks.slack.com") || url.includes("slack.com/api");
-  const body = isSlack ? buildSlackPayload(event) : {
+  const body = isSlack ? buildSlackPayload(event, remediation) : {
     source: "webhook-hub",
     event,
     forwarded_at: new Date().toISOString(),
@@ -109,7 +119,7 @@ async function forwardToWebhook(
   }
 }
 
-function buildSlackPayload(event: NormalizedEvent): Record<string, unknown> {
+function buildSlackPayload(event: NormalizedEvent, remediation: RemediationMatch[] = []): Record<string, unknown> {
   const severityEmoji: Record<string, string> = {
     info: ":large_blue_circle:",
     warning: ":warning:",
@@ -152,6 +162,25 @@ function buildSlackPayload(event: NormalizedEvent): Record<string, unknown> {
           },
         ],
       },
+      // Add remediation steps if any match
+      ...(remediation.length > 0
+        ? [
+            { type: "divider" },
+            {
+              type: "header",
+              text: { type: "plain_text", text: ":wrench: Remediation Steps" },
+            },
+            ...remediation.flatMap((r) => [
+              {
+                type: "section",
+                text: {
+                  type: "mrkdwn",
+                  text: `*${r.title}*\n${r.steps.map((s, i) => `${i + 1}. ${s}`).join("\n")}`,
+                },
+              },
+            ]),
+          ]
+        : []),
       { type: "divider" },
     ],
   };
@@ -160,7 +189,8 @@ function buildSlackPayload(event: NormalizedEvent): Record<string, unknown> {
 async function forwardToEmail(
   to: string,
   event: NormalizedEvent,
-  apiKey: string
+  apiKey: string,
+  remediation: RemediationMatch[] = []
 ): Promise<void> {
   const severityEmoji: Record<string, string> = {
     info: "ℹ️",
@@ -180,7 +210,7 @@ async function forwardToEmail(
       from: "Webhook Hub <onboarding@resend.dev>",
       to: [to],
       subject: `${emoji} [${event.provider}] ${event.event_type} — ${event.severity}`,
-      html: buildEmailHTML(event),
+      html: buildEmailHTML(event, remediation),
     }),
   });
 
@@ -190,7 +220,19 @@ async function forwardToEmail(
   }
 }
 
-function buildEmailHTML(event: NormalizedEvent): string {
+function buildEmailHTML(event: NormalizedEvent, remediation: RemediationMatch[] = []): string {
+  const remediationHTML = remediation.length > 0
+    ? `<div style="margin-top: 16px; padding: 16px; background: #1a1e2a; border-left: 3px solid #f0883e; border-radius: 4px;">
+        <h3 style="margin: 0 0 8px 0; font-size: 15px; color: #f0883e;">Remediation Steps</h3>
+        ${remediation.map(r => `
+          <p style="margin: 0 0 4px 0; font-weight: 600; font-size: 14px;">${r.title}</p>
+          <ol style="margin: 4px 0 12px 0; padding-left: 20px;">
+            ${r.steps.map(s => `<li style="padding: 2px 0; font-size: 13px;">${s}</li>`).join('')}
+          </ol>
+        `).join('')}
+      </div>`
+    : '';
+
   return `
     <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background: #0f1117; color: #e1e4e8; padding: 20px; border-radius: 8px;">
@@ -204,6 +246,7 @@ function buildEmailHTML(event: NormalizedEvent): string {
           <tr><td style="padding: 8px 0; color: #8b949e;">Time</td><td style="padding: 8px 0;">${event.received_at}</td></tr>
           <tr><td style="padding: 8px 0; color: #8b949e;">Event ID</td><td style="padding: 8px 0; font-family: monospace; font-size: 13px;">${event.id}</td></tr>
         </table>
+        ${remediationHTML}
       </div>
       <p style="color: #8b949e; font-size: 12px; margin-top: 16px; text-align: center;">
         Sent by <a href="https://webhook-hub.noahpilkington98.workers.dev/dashboard" style="color: #58a6ff;">Webhook Hub</a>

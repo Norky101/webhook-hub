@@ -406,6 +406,49 @@ app.delete("/api/forwarding/:id", async (c) => {
   return c.json({ status: "deleted" });
 });
 
+// ─── Remediation Playbooks API ──────────────────────────
+
+app.get("/api/playbooks", async (c) => {
+  const tenant_id = c.req.query("tenant_id");
+  if (!tenant_id) return c.json({ error: "tenant_id is required" }, 400);
+  const result = await c.env.DB.prepare(
+    "SELECT * FROM remediation_playbooks WHERE tenant_id = ? ORDER BY created_at DESC"
+  ).bind(tenant_id).all();
+  return c.json({ playbooks: result.results || [] });
+});
+
+app.post("/api/playbooks", async (c) => {
+  const body = await c.req.json<{
+    tenant_id: string;
+    event_pattern: string;
+    provider_filter?: string;
+    title: string;
+    steps: string[];
+  }>();
+
+  if (!body.tenant_id || !body.event_pattern || !body.title || !body.steps?.length) {
+    return c.json({ error: "tenant_id, event_pattern, title, and steps are required" }, 400);
+  }
+
+  await c.env.DB.prepare(
+    "INSERT INTO remediation_playbooks (tenant_id, event_pattern, provider_filter, title, steps) VALUES (?, ?, ?, ?, ?)"
+  ).bind(
+    body.tenant_id,
+    body.event_pattern,
+    body.provider_filter || null,
+    body.title,
+    JSON.stringify(body.steps)
+  ).run();
+
+  return c.json({ status: "created" }, 201);
+});
+
+app.delete("/api/playbooks/:id", async (c) => {
+  const { id } = c.req.param();
+  await c.env.DB.prepare("DELETE FROM remediation_playbooks WHERE id = ?").bind(id).run();
+  return c.json({ status: "deleted" });
+});
+
 // Test forwarding — sends a test event through all active rules for the tenant
 app.post("/api/forwarding/test/:tenant_id", async (c) => {
   const { tenant_id } = c.req.param();

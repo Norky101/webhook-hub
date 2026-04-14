@@ -52,6 +52,20 @@ CREATE TABLE IF NOT EXISTS forwarding_rules (
 
 CREATE INDEX IF NOT EXISTS idx_forwarding_tenant ON forwarding_rules(tenant_id, active);
 
+-- Remediation playbooks — what to do when bad events happen
+CREATE TABLE IF NOT EXISTS remediation_playbooks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id TEXT NOT NULL,
+  event_pattern TEXT NOT NULL, -- matches against event_type (supports wildcards: 'incident.*')
+  provider_filter TEXT, -- NULL = all providers
+  title TEXT NOT NULL,
+  steps TEXT NOT NULL, -- JSON array of step strings
+  auto_forward INTEGER NOT NULL DEFAULT 1, -- include in Slack/email forwards
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_remediation_tenant ON remediation_playbooks(tenant_id);
+
 -- Dead letter queue — events that exhausted all retries
 CREATE TABLE IF NOT EXISTS dead_letter (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

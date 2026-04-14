@@ -343,6 +343,27 @@ curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/forwarding/tes
 
 ---
 
+### Remediation Playbooks
+
+Attach remediation steps to event patterns. When a matching event fires, the steps are included in Slack messages and emails automatically.
+
+**`GET /api/playbooks?tenant_id=X`** — List playbooks
+
+**`POST /api/playbooks`** — Create a playbook
+
+```bash
+# When any PagerDuty incident fires, include these remediation steps
+curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/playbooks \
+  -H "Content-Type: application/json" \
+  -d '{"tenant_id":"acme_corp","event_pattern":"incident.*","provider_filter":"pagerduty","title":"Incident Response","steps":["Check Grafana dashboard for anomalies","Review recent deploys in GitHub","If DB-related, check connection pool metrics","Escalate to oncall if not resolved in 15min"]}'
+```
+
+**`DELETE /api/playbooks/:id`** — Delete a playbook
+
+Supports wildcard patterns: `incident.*` matches `incident.triggered`, `incident.escalated`, etc.
+
+---
+
 ### Data Export
 
 **`GET /api/export?tenant_id=X&format=csv`** — Export events as CSV or JSON
@@ -385,7 +406,8 @@ src/
   utils.ts          — HMAC, timing-safe compare, ID generation
   retry.ts          — Retry engine with exponential backoff
   simulator.ts      — Webhook simulator for demos and testing
-  forwarding.ts     — Webhook forwarding engine (email + webhook URLs)
+  forwarding.ts     — Webhook forwarding engine (email + Slack + webhook URLs)
+  remediation.ts    — Remediation playbook matching engine
   dashboard.ts      — HTML dashboard template
   db/
     schema.sql      — D1 schema (events, retry_queue, dead_letter)
