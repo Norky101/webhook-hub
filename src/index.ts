@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { getProvider, listProviders } from "./providers/registry";
 import { generateEventId, nowISO } from "./utils";
 import { processRetryQueue, queueForRetry } from "./retry";
+import { dashboardHTML } from "./dashboard";
 
 /** Env bindings for Cloudflare Workers */
 export type Bindings = {
@@ -40,6 +41,11 @@ app.get("/api/health", async (c) => {
   } catch (e) {
     return c.json({ status: "unhealthy", error: String(e) }, 500);
   }
+});
+
+// ─── Dashboard ──────────────────────────────────────────
+app.get("/dashboard", (c) => {
+  return c.html(dashboardHTML());
 });
 
 // ─── Webhook Receiver ───────────────────────────────────
