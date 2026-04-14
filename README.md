@@ -459,6 +459,10 @@ Open in a browser: `https://webhook-hub.noahpilkington98.workers.dev/dashboard?t
 - Built-in webhook simulator
 - Auto-refreshes every 30 seconds
 
+**`GET /connections`** — Connections management page
+
+Manage all integrations from one place: forwarding channels (email, Slack, SMS, voice, webhook), correlation rules, and remediation playbooks. Shows active/inactive status per channel with severity filters.
+
 ---
 
 ## Project Structure
@@ -474,6 +478,7 @@ src/
   health-scores.ts  — Provider health scoring and scheduled digest engine
   remediation.ts    — Remediation playbook matching engine
   correlation.ts    — Cross-tool event correlation engine
+  connections.ts    — Connections management page
   dashboard.ts      — HTML dashboard template
   db/
     schema.sql      — D1 schema (events, retry_queue, dead_letter)

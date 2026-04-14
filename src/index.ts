@@ -5,6 +5,7 @@ import { generateEventId, nowISO } from "./utils";
 import { processRetryQueue, queueForRetry } from "./retry";
 import { forwardEvent } from "./forwarding";
 import { dashboardHTML } from "./dashboard";
+import { connectionsHTML } from "./connections";
 import { getProviderHealthScores, sendHealthDigest } from "./health-scores";
 import { checkCorrelations } from "./correlation";
 import { generateWebhook, simulatorProviders } from "./simulator";
@@ -53,6 +54,10 @@ app.get("/api/health", async (c) => {
 // ─── Dashboard ──────────────────────────────────────────
 app.get("/dashboard", (c) => {
   return c.html(dashboardHTML());
+});
+
+app.get("/connections", (c) => {
+  return c.html(connectionsHTML());
 });
 
 // ─── Webhook Receiver ───────────────────────────────────

@@ -114,7 +114,10 @@ export function dashboardHTML(): string {
 </head>
 <body>
   <div class="header">
-    <h1>Webhook Hub</h1>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <h1>Webhook Hub</h1>
+      <a href="/connections" style="font-size:13px;color:#58a6ff;text-decoration:none;">Connections</a>
+    </div>
     <div class="status">
       <div class="dot" id="status-dot"></div>
       <span id="status-text">Connecting...</span>

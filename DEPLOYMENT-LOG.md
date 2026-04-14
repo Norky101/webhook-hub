@@ -152,6 +152,14 @@ Claude Code (CLI) — Claude Opus, max effort. (Upgraded to the $100 subscriptio
 - Supports wildcard event patterns (payment.* matches payment.failed)
 - **Commit:** `Phase 18: cross-tool correlation engine`
 
+### Session 18 — Connections Page (18:50–19:00)
+- Built `/connections` page: manage all integrations from one place
+- Channel cards show active/inactive status for email, Slack, SMS, voice call, webhook
+- Lists correlation rules and remediation playbooks with delete buttons
+- Nav link added to dashboard header
+- Auto-loads demo_tenant by default
+- **Commit:** `Phase 19: connections page`
+
 ---
 
 ## Process Notes
