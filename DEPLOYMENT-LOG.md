@@ -67,26 +67,32 @@ Claude Code (CLI) — Claude Opus, max effort. Used for architecture, code gener
 - **Commit:** `Phase 6` through `Phase 7` + supporting commits
 
 ### Session 7 — One More Thing: Webhook Simulator (12:35–13:00)
-- Built the webhook simulator: realistic payload generators for all 5 providers
+- Built the webhook simulator: realistic payload generators for all 8 providers
 - Wired `POST /api/simulate/:provider/:tenant_id?count=N` endpoint
 - Sends simulated webhooks through the real pipeline (normalization, D1, dashboard)
-- Tested live: single events, burst mode, all 5 providers
-- Populated demo_tenant with 25 simulated events across all providers
+- Tested live: single events, burst mode, all providers
+- Populated demo_tenant with simulated events across all providers
 - Updated README with simulator docs, DECISIONS.md with "One More Thing" rationale
 - **Commit:** `Phase 8: webhook simulator`
 
 ### Session 8 — Dashboard UX Polish (13:00–13:15)
 - Dashboard auto-loads demo_tenant by default (no blank screen on first visit)
 - Added "Simulate Webhook" button directly in the dashboard UI
-- Added "All Providers" option to the dropdown (sends 25 events in one click)
+- Added "All Providers" option to the dropdown (sends 40 events across all 8 in one click)
 - Added explainer text so visitors immediately understand what they're looking at
 - Improved tenant input placeholder to explain what to enter
 - **Commit:** `Dashboard UX: auto-load demo tenant, simulate buttons, explainer text`
 
-### Session 9 — Extra Credit Providers + Final Polish (13:15–)
-- Added extra credit providers to prove the framework pattern scales
-- End-to-end review of all docs, live URL, dashboard
-- Final deployment log update
+### Session 9 — Extra Credit Providers + Dashboard Polish (13:15–13:40)
+- Added 3 extra credit providers: Salesforce, PagerDuty, Zendesk (8 total)
+- Each stamped out in ~10 minutes using the registry pattern — proving the framework scales
+- Added all 3 to simulator with realistic payloads
+- Updated dashboard dropdown, provider colors, and "All Providers" burst
+- Made all dashboard sections collapsible (click to expand/collapse)
+- Clarified tenant input UX — any name creates an isolated workspace
+- Updated DECISIONS.md with decisions #12 and #13
+- Updated tests to verify all 8 providers registered
+- **Commits:** `Phase 9: extra credit providers` + dashboard UX commits
 
 ---
 
