@@ -53,6 +53,8 @@ export function dashboardHTML(): string {
       font-size: 13px;
     }
     .controls button:hover { background: #2ea043; }
+    .controls button[style*="8957e5"]:hover { background: #7048c6 !important; }
+    .controls button:disabled { opacity: 0.5; cursor: wait; }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -114,11 +116,26 @@ export function dashboardHTML(): string {
     </div>
   </div>
 
+  <p style="color:#8b949e; font-size:13px; margin-bottom:16px; line-height:1.5;">
+    Multi-tenant webhook monitoring. Select a tenant to view their events, or simulate live webhooks to see the platform in action.
+  </p>
+
   <div id="error-banner"></div>
 
   <div class="controls">
-    <input type="text" id="tenant-input" placeholder="tenant_id (required)" value="">
+    <input type="text" id="tenant-input" placeholder="tenant_id" value="">
     <button onclick="loadDashboard()">Load</button>
+    <span style="color:#30363d; margin:0 4px;">|</span>
+    <select id="sim-provider">
+      <option value="hubspot">HubSpot</option>
+      <option value="shopify">Shopify</option>
+      <option value="linear">Linear</option>
+      <option value="intercom">Intercom</option>
+      <option value="gusto">Gusto</option>
+    </select>
+    <button onclick="simulateWebhook()" id="sim-btn" style="background:#8957e5;">Simulate Webhook</button>
+    <button onclick="simulateBurst()" id="burst-btn" style="background:#8957e5;">Simulate All (x25)</button>
+    <span id="sim-status" style="font-size:12px; color:#8b949e;"></span>
   </div>
 
   <div class="grid">
@@ -325,12 +342,52 @@ function esc(s) {
   return d.innerHTML;
 }
 
-// Load from URL param if present
-const params = new URLSearchParams(location.search);
-if (params.get('tenant_id')) {
-  document.getElementById('tenant-input').value = params.get('tenant_id');
-  loadDashboard();
+async function simulateWebhook() {
+  const tenant = document.getElementById('tenant-input').value.trim();
+  if (!tenant) { alert('Enter a tenant ID first'); return; }
+  const provider = document.getElementById('sim-provider').value;
+  const status = document.getElementById('sim-status');
+  const btn = document.getElementById('sim-btn');
+  btn.disabled = true;
+  status.textContent = 'Sending...';
+  try {
+    const res = await fetch(BASE + '/api/simulate/' + provider + '/' + tenant, { method: 'POST' });
+    const json = await res.json();
+    status.textContent = 'Sent: ' + (json.events?.[0]?.event_type || 'ok');
+    setTimeout(() => { status.textContent = ''; }, 3000);
+    loadDashboard();
+  } catch (err) {
+    status.textContent = 'Error: ' + err.message;
+  }
+  btn.disabled = false;
 }
+
+async function simulateBurst() {
+  const tenant = document.getElementById('tenant-input').value.trim();
+  if (!tenant) { alert('Enter a tenant ID first'); return; }
+  const btn = document.getElementById('burst-btn');
+  const status = document.getElementById('sim-status');
+  btn.disabled = true;
+  status.textContent = 'Sending 25 events across all providers...';
+  const providers = ['hubspot', 'shopify', 'linear', 'intercom', 'gusto'];
+  try {
+    await Promise.all(providers.map(p =>
+      fetch(BASE + '/api/simulate/' + p + '/' + tenant + '?count=5', { method: 'POST' })
+    ));
+    status.textContent = '25 events sent!';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+    loadDashboard();
+  } catch (err) {
+    status.textContent = 'Error: ' + err.message;
+  }
+  btn.disabled = false;
+}
+
+// Auto-load: URL param > default to demo_tenant
+const params = new URLSearchParams(location.search);
+const defaultTenant = params.get('tenant_id') || 'demo_tenant';
+document.getElementById('tenant-input').value = defaultTenant;
+loadDashboard();
 </script>
 </body>
 </html>`;
