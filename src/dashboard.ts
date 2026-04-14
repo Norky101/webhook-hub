@@ -117,13 +117,13 @@ export function dashboardHTML(): string {
   </div>
 
   <p style="color:#8b949e; font-size:13px; margin-bottom:16px; line-height:1.5;">
-    Multi-tenant webhook monitoring. Select a tenant to view their events, or simulate live webhooks to see the platform in action.
+    Multi-tenant webhook monitoring. Enter any tenant name to create an isolated workspace, or use the default. Simulate webhooks to see the platform in action.
   </p>
 
   <div id="error-banner"></div>
 
   <div class="controls">
-    <input type="text" id="tenant-input" placeholder="Your company name (e.g. acme_corp)" value="">
+    <input type="text" id="tenant-input" placeholder="Enter any name — e.g. acme_corp, my_team, test" value="" title="Each tenant is an isolated namespace. Type any name to create or view one.">
     <button onclick="loadDashboard()">Load</button>
     <span style="color:#30363d; margin:0 4px;">|</span>
     <select id="sim-provider">
