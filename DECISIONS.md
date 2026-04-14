@@ -77,6 +77,8 @@ Documenting every meaningful decision made during the build — what was conside
 
 **How it works:** Each provider has a payload generator with realistic random data (deal names, order amounts, issue titles, employee events). The simulate endpoint generates the payload, then sends it through the actual webhook receiver via an internal `app.fetch()` call — no external HTTP, same code path as a real webhook.
 
+**Dashboard integration:** The simulator is built directly into the dashboard UI. A dropdown lets you pick a single provider or "All Providers" (sends 5 events x 5 providers = 25 events). One click and the dashboard populates live — no curl, no terminal, no setup. The dashboard also auto-loads with `demo_tenant` so there's never a blank screen. This was an intentional UX decision: the first thing anyone sees should demonstrate the platform working, not ask them to configure something.
+
 ---
 
 ## The Thinking Behind The Build

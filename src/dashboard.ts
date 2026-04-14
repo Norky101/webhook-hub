@@ -123,10 +123,11 @@ export function dashboardHTML(): string {
   <div id="error-banner"></div>
 
   <div class="controls">
-    <input type="text" id="tenant-input" placeholder="tenant_id" value="">
+    <input type="text" id="tenant-input" placeholder="Your company name (e.g. acme_corp)" value="">
     <button onclick="loadDashboard()">Load</button>
     <span style="color:#30363d; margin:0 4px;">|</span>
     <select id="sim-provider">
+      <option value="all">All Providers</option>
       <option value="hubspot">HubSpot</option>
       <option value="shopify">Shopify</option>
       <option value="linear">Linear</option>
@@ -134,7 +135,6 @@ export function dashboardHTML(): string {
       <option value="gusto">Gusto</option>
     </select>
     <button onclick="simulateWebhook()" id="sim-btn" style="background:#8957e5;">Simulate Webhook</button>
-    <button onclick="simulateBurst()" id="burst-btn" style="background:#8957e5;">Simulate All (x25)</button>
     <span id="sim-status" style="font-size:12px; color:#8b949e;"></span>
   </div>
 
@@ -349,36 +349,32 @@ async function simulateWebhook() {
   const status = document.getElementById('sim-status');
   const btn = document.getElementById('sim-btn');
   btn.disabled = true;
-  status.textContent = 'Sending...';
-  try {
-    const res = await fetch(BASE + '/api/simulate/' + provider + '/' + tenant, { method: 'POST' });
-    const json = await res.json();
-    status.textContent = 'Sent: ' + (json.events?.[0]?.event_type || 'ok');
-    setTimeout(() => { status.textContent = ''; }, 3000);
-    loadDashboard();
-  } catch (err) {
-    status.textContent = 'Error: ' + err.message;
-  }
-  btn.disabled = false;
-}
 
-async function simulateBurst() {
-  const tenant = document.getElementById('tenant-input').value.trim();
-  if (!tenant) { alert('Enter a tenant ID first'); return; }
-  const btn = document.getElementById('burst-btn');
-  const status = document.getElementById('sim-status');
-  btn.disabled = true;
-  status.textContent = 'Sending 25 events across all providers...';
-  const providers = ['hubspot', 'shopify', 'linear', 'intercom', 'gusto'];
-  try {
-    await Promise.all(providers.map(p =>
-      fetch(BASE + '/api/simulate/' + p + '/' + tenant + '?count=5', { method: 'POST' })
-    ));
-    status.textContent = '25 events sent!';
-    setTimeout(() => { status.textContent = ''; }, 3000);
-    loadDashboard();
-  } catch (err) {
-    status.textContent = 'Error: ' + err.message;
+  const allProviders = ['hubspot', 'shopify', 'linear', 'intercom', 'gusto'];
+
+  if (provider === 'all') {
+    status.textContent = 'Sending 25 events across all providers...';
+    try {
+      await Promise.all(allProviders.map(p =>
+        fetch(BASE + '/api/simulate/' + p + '/' + tenant + '?count=5', { method: 'POST' })
+      ));
+      status.textContent = '25 events sent across all providers!';
+      setTimeout(() => { status.textContent = ''; }, 3000);
+      loadDashboard();
+    } catch (err) {
+      status.textContent = 'Error: ' + err.message;
+    }
+  } else {
+    status.textContent = 'Sending...';
+    try {
+      const res = await fetch(BASE + '/api/simulate/' + provider + '/' + tenant, { method: 'POST' });
+      const json = await res.json();
+      status.textContent = 'Sent: ' + (json.events?.[0]?.event_type || 'ok');
+      setTimeout(() => { status.textContent = ''; }, 3000);
+      loadDashboard();
+    } catch (err) {
+      status.textContent = 'Error: ' + err.message;
+    }
   }
   btn.disabled = false;
 }
