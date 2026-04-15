@@ -494,7 +494,7 @@ async function loadDashboard() {
       eventsTable.innerHTML = '<tr><td colspan="6" class="empty">' + (searchTerm ? 'No events matching "' + esc(searchTerm) + '"' : 'No events') + '</td></tr>';
     } else {
       eventsTable.innerHTML = evts.map(e =>
-        '<tr onclick="openEventModal(\'' + e.id + '\')" style="cursor:pointer;">'
+        '<tr data-event-id="' + e.id + '" style="cursor:pointer;">'
         + '<td>' + fmtTime(e.received_at) + '</td>'
         + '<td>' + e.provider + '</td>'
         + '<td>' + e.event_type + '</td>'
@@ -744,7 +744,7 @@ async function openEventModal(eventId) {
 
     // Actions
     html += '<div style="margin-top:16px;display:flex;gap:8px;">';
-    html += '<button onclick="replayEvent(\'' + event.id + '\')" style="background:#238636;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Replay Event</button>';
+    html += '<button data-replay-id="' + event.id + '" style="background:#238636;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Replay Event</button>';
     html += '<button onclick="closeModal()" style="background:#30363d;color:#e1e4e8;border:1px solid #484f58;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Close</button>';
     html += '</div>';
 
@@ -769,6 +769,14 @@ async function replayEvent(eventId) {
 // Close modal on Escape key
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeModal();
+});
+
+// Delegated click handlers
+document.addEventListener('click', function(e) {
+  var row = e.target.closest('tr[data-event-id]');
+  if (row) openEventModal(row.getAttribute('data-event-id'));
+  var replayBtn = e.target.closest('[data-replay-id]');
+  if (replayBtn) replayEvent(replayBtn.getAttribute('data-replay-id'));
 });
 
 function applyFilters() {
