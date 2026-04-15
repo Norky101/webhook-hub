@@ -324,7 +324,13 @@ Actions:
 **Chose:** Native HTML title tooltips on summary cards explaining each metric
 **Why:** The dashboard should be clean — no extra text on screen. But a new user seeing "Dead Letters: 5" shouldn't have to guess what that means. Hover for 1-2 seconds and you get the full explanation. Zero screen clutter, full context on demand. Same pattern as Grafana and Datadog dashboards.
 
-## 38. End-to-end testing against the live URL
+## 38. Custom SVG logo + favicon: brand without dependencies
+
+**Considered:** Image file logo, emoji, text-only, or inline SVG
+**Chose:** Custom inline SVG — a central hub with 6 colored nodes connected by lines
+**Why:** An image file needs hosting, caching, and loading. An inline SVG renders instantly, scales to any size, and lives in the HTML — zero external requests. The hub-and-nodes design visually communicates the platform's purpose: many providers connected to one central point. Each node uses a real provider brand color. The same SVG serves as the favicon (browser tab icon) using a data URI. Logo is clickable on every page and links back to the dashboard — consistent navigation pattern.
+
+## 39. End-to-end testing against the live URL
 
 **Considered:** Unit tests only (mock D1), integration tests with Miniflare, or full end-to-end tests against the deployed production URL
 **Chose:** Both — 18 unit tests with mock D1 for fast iteration, plus 22 end-to-end tests curled against the live Cloudflare Worker

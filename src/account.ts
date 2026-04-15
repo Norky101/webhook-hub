@@ -8,6 +8,7 @@ export function accountHTML(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'><circle cx='14' cy='14' r='6' fill='none' stroke='%2358a6ff' stroke-width='2'/><circle cx='14' cy='14' r='2.5' fill='%2358a6ff'/><circle cx='4' cy='4' r='2' fill='%233fb950'/><circle cx='24' cy='4' r='2' fill='%23f85149'/><circle cx='4' cy='24' r='2' fill='%23d29922'/><circle cx='24' cy='24' r='2' fill='%23bc8cff'/><circle cx='14' cy='2' r='2' fill='%23ff7a59'/><circle cx='14' cy='26' r='2' fill='%2396bf48'/></svg>">
   <title>Webhook Hub — Account</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -67,7 +68,10 @@ export function accountHTML(): string {
 </head>
 <body>
   <div class="header">
-    <h1>Account</h1>
+    <a href="/dashboard" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:#e1e4e8;">
+      <svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="6" fill="none" stroke="#58a6ff" stroke-width="2"/><circle cx="14" cy="14" r="2.5" fill="#58a6ff"/><circle cx="4" cy="4" r="2" fill="#3fb950"/><line x1="6" y1="6" x2="10" y2="10" stroke="#3fb950" stroke-width="1.5" opacity="0.6"/><circle cx="24" cy="4" r="2" fill="#f85149"/><line x1="22" y1="6" x2="18" y2="10" stroke="#f85149" stroke-width="1.5" opacity="0.6"/><circle cx="4" cy="24" r="2" fill="#d29922"/><line x1="6" y1="22" x2="10" y2="18" stroke="#d29922" stroke-width="1.5" opacity="0.6"/><circle cx="24" cy="24" r="2" fill="#bc8cff"/><line x1="22" y1="22" x2="18" y2="18" stroke="#bc8cff" stroke-width="1.5" opacity="0.6"/><circle cx="14" cy="2" r="2" fill="#ff7a59"/><line x1="14" y1="4" x2="14" y2="8" stroke="#ff7a59" stroke-width="1.5" opacity="0.6"/><circle cx="14" cy="26" r="2" fill="#96bf48"/><line x1="14" y1="24" x2="14" y2="20" stroke="#96bf48" stroke-width="1.5" opacity="0.6"/></svg>
+      <h1>Account</h1>
+    </a>
     <div class="nav">
       <a href="/dashboard">Dashboard</a>
       <a href="/connections">Connections</a>
