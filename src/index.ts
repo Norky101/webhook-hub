@@ -419,6 +419,16 @@ app.post("/api/forwarding", async (c) => {
   return c.json({ status: "created" }, 201);
 });
 
+// Toggle a forwarding rule on/off
+app.patch("/api/forwarding/:id", async (c) => {
+  const { id } = c.req.param();
+  const body = await c.req.json<{ active: number }>();
+  await c.env.DB.prepare("UPDATE forwarding_rules SET active = ? WHERE id = ?")
+    .bind(body.active, id)
+    .run();
+  return c.json({ status: "updated", active: body.active });
+});
+
 // Delete a forwarding rule
 app.delete("/api/forwarding/:id", async (c) => {
   const { id } = c.req.param();

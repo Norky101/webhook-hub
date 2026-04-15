@@ -269,7 +269,13 @@ Actions:
 
 **Why this matters for SprintMode:** Aaron is "all-in on AI agents." This feature turns webhook-hub from a monitoring tool into an AI-native ops platform. The platform doesn't just collect events — it understands them. There's nothing comparable on the market.
 
-## 30. End-to-end testing against the live URL
+## 30. Toggle switches over delete-and-recreate
+
+**Considered:** Delete a forwarding rule to stop it, recreate to restart. Or an active/inactive toggle.
+**Chose:** Clickable toggle switches on each forwarding rule in the connections page
+**Why:** Deleting a rule loses the configuration — the destination URL, the severity filter, the rule name. If an ops person wants to temporarily silence Slack during a maintenance window, they shouldn't have to reconfigure it from scratch afterward. A toggle preserves the rule but stops it from firing. This is the same pattern PagerDuty, Datadog, and every mature alerting tool uses. The `active` field was already in the schema — the toggle just exposes it in the UI.
+
+## 31. End-to-end testing against the live URL
 
 **Considered:** Unit tests only (mock D1), integration tests with Miniflare, or full end-to-end tests against the deployed production URL
 **Chose:** Both — 18 unit tests with mock D1 for fast iteration, plus 22 end-to-end tests curled against the live Cloudflare Worker

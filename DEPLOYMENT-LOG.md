@@ -214,6 +214,13 @@ Claude Code (CLI) — Claude Opus, max effort. (Upgraded to the $100 subscriptio
 - Graceful degradation — works with or without Anthropic API key
 - **Commit:** `Phase 26: AI event analysis`
 
+### Session 26 — Toggle Buttons on Connections (23:05–23:15)
+- Clickable toggle switches on each forwarding rule (green=on, grey=off)
+- PATCH /api/forwarding/:id to toggle active status
+- Each rule shows its own toggle — can enable/disable individually
+- Card status updates based on whether any rules are active
+- **Commit:** `Phase 28: clickable toggle switches on connections page`
+
 ---
 
 ## Process Notes

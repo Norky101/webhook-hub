@@ -58,6 +58,19 @@ export function connectionsHTML(): string {
     }
     .badge.on { background: #0d3321; color: #3fb950; }
     .badge.off { background: #21262d; color: #484f58; }
+    .toggle {
+      width: 44px; height: 24px; border-radius: 12px; border: none;
+      cursor: pointer; position: relative; transition: background 0.2s;
+    }
+    .toggle.on { background: #238636; }
+    .toggle.off { background: #30363d; }
+    .toggle::after {
+      content: ''; position: absolute; top: 3px; width: 18px; height: 18px;
+      border-radius: 50%; background: #e1e4e8; transition: left 0.2s;
+    }
+    .toggle.on::after { left: 23px; }
+    .toggle.off::after { left: 3px; }
+    .toggle:hover { opacity: 0.85; }
     table { width: 100%; border-collapse: collapse; }
     th { text-align: left; font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 12px; border-bottom: 1px solid #21262d; }
     td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #161b22; }
@@ -152,16 +165,24 @@ async function loadConnections() {
     // Show all channel types (even unconfigured ones)
     const allTypes = ['email', 'slack', 'sms', 'call', 'webhook'];
     let cardsHTML = allTypes.map(type => {
-      const active = byType[type] && byType[type].length > 0;
-      const names = active ? byType[type].map(r => r.name || r.destination).join(', ') : 'Not configured';
-      const severity = active ? (byType[type][0].severity_filter || 'all') : '—';
+      const typeRules = byType[type] || [];
+      const active = typeRules.length > 0 && typeRules.some(r => r.active === 1);
+      const names = typeRules.length > 0 ? typeRules.map(r => {
+        const label = esc(r.name || r.destination);
+        const isOn = r.active === 1;
+        return '<div style="display:flex;align-items:center;gap:8px;margin-top:6px;">'
+          + '<button class="toggle ' + (isOn ? 'on' : 'off') + '" onclick="toggleRule(' + r.id + ',' + (isOn ? 0 : 1) + ')"></button>'
+          + '<span style="font-size:12px;color:' + (isOn ? '#e1e4e8' : '#484f58') + ';">' + label + '</span>'
+          + '</div>';
+      }).join('') : '<div style="font-size:12px;color:#484f58;margin-top:6px;">Not configured</div>';
+      const severity = typeRules.length > 0 ? (typeRules[0].severity_filter || 'all') : '—';
       return '<div class="channel-card ' + (active ? 'active' : '') + '">'
         + '<div class="channel-header">'
         + '<span class="channel-name">' + (CHANNEL_ICONS[type] || '') + ' ' + (CHANNEL_NAMES[type] || type) + '</span>'
         + '<span class="badge ' + (active ? 'on' : 'off') + '">' + (active ? 'Active' : 'Off') + '</span>'
         + '</div>'
-        + '<div class="channel-status">Severity: ' + severity + ' | Rules: ' + (active ? byType[type].length : 0) + '</div>'
-        + '<div class="channel-dest">' + esc(names) + '</div>'
+        + '<div class="channel-status">Severity: ' + severity + ' | Rules: ' + typeRules.length + '</div>'
+        + names
         + '</div>';
     }).join('');
 
@@ -222,6 +243,15 @@ async function loadConnections() {
       }).join('');
     }
   } catch (e) { /* ignore */ }
+}
+
+async function toggleRule(id, newActive) {
+  await fetch(BASE + '/api/forwarding/' + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ active: newActive }),
+  });
+  loadConnections();
 }
 
 async function delCorr(id) {
