@@ -181,6 +181,16 @@ export function dashboardHTML(): string {
   <div class="loading-bar" id="loading-bar" style="width:0%"></div>
   <div class="header">
     <div style="display:flex;align-items:center;gap:16px;">
+      <svg width="28" height="28" viewBox="0 0 28 28" style="margin-right:8px;">
+        <circle cx="14" cy="14" r="6" fill="none" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="14" cy="14" r="2.5" fill="#58a6ff"/>
+        <circle cx="4" cy="4" r="2" fill="#3fb950"/><line x1="6" y1="6" x2="10" y2="10" stroke="#3fb950" stroke-width="1.5" opacity="0.6"/>
+        <circle cx="24" cy="4" r="2" fill="#f85149"/><line x1="22" y1="6" x2="18" y2="10" stroke="#f85149" stroke-width="1.5" opacity="0.6"/>
+        <circle cx="4" cy="24" r="2" fill="#d29922"/><line x1="6" y1="22" x2="10" y2="18" stroke="#d29922" stroke-width="1.5" opacity="0.6"/>
+        <circle cx="24" cy="24" r="2" fill="#bc8cff"/><line x1="22" y1="22" x2="18" y2="18" stroke="#bc8cff" stroke-width="1.5" opacity="0.6"/>
+        <circle cx="14" cy="2" r="2" fill="#ff7a59"/><line x1="14" y1="4" x2="14" y2="8" stroke="#ff7a59" stroke-width="1.5" opacity="0.6"/>
+        <circle cx="14" cy="26" r="2" fill="#96bf48"/><line x1="14" y1="24" x2="14" y2="20" stroke="#96bf48" stroke-width="1.5" opacity="0.6"/>
+      </svg>
       <h1>Webhook Hub</h1>
       <a href="/connections" style="font-size:13px;color:#58a6ff;text-decoration:none;">Connections</a>
       <a href="/account" style="font-size:13px;color:#58a6ff;text-decoration:none;">Account</a>
