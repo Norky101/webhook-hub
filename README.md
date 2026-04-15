@@ -386,6 +386,20 @@ curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/forwarding/tes
 
 ---
 
+### AI Event Analysis
+
+Click "Analyze Events with AI" on the dashboard, or call the API directly.
+
+**`POST /api/analyze?tenant_id=X`** — Analyze recent events
+
+Returns a summary, details, risks, and recommendations. Uses Claude when `ANTHROPIC_API_KEY` is configured, falls back to structured analysis.
+
+```bash
+curl -X POST "https://webhook-hub.noahpilkington98.workers.dev/api/analyze?tenant_id=demo_tenant"
+```
+
+---
+
 ### Automation Workflows
 
 Configurable action chains triggered by events. When a webhook matches a workflow, execute a sequence of actions — create tickets, call APIs, send Slack messages.
@@ -534,6 +548,7 @@ src/
   forwarding.ts     — Webhook forwarding engine (email, Slack, SMS, voice call, webhook URLs)
   health-scores.ts  — Provider health scoring and scheduled digest engine
   remediation.ts    — Remediation playbook matching engine
+  ai-analysis.ts    — AI event analysis (Claude + structured fallback)
   automation.ts     — Automation workflow engine (action chains)
   alerting.ts       — Metric-based alerting rules engine
   correlation.ts    — Cross-tool event correlation engine

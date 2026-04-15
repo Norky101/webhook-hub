@@ -206,6 +206,14 @@ Claude Code (CLI) — Claude Opus, max effort. (Upgraded to the $100 subscriptio
 - automation_workflows D1 table
 - **Commit:** `Phase 25: automation workflows engine`
 
+### Session 25 — AI Event Analysis (21:20–21:35)
+- Built AI analysis endpoint: POST /api/analyze?tenant_id=X
+- Claude mode: sends last 100 events + health scores, gets back analysis
+- Structured mode: builds analysis from real data when no API key configured
+- Dashboard: "Analyze Events with AI" button, purple AI panel with summary/risks/recommendations
+- Graceful degradation — works with or without Anthropic API key
+- **Commit:** `Phase 26: AI event analysis`
+
 ---
 
 ## Process Notes

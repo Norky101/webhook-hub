@@ -211,6 +211,20 @@ export function dashboardHTML(): string {
     <span id="sim-status" style="font-size:12px; color:#8b949e;"></span>
   </div>
 
+  <div id="ai-panel" style="display:none; background:#161b22; border:1px solid #30363d; border-radius:8px; padding:16px; margin-bottom:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="font-size:14px; color:#d2a8ff; margin:0;">AI Analysis</h3>
+      <button onclick="document.getElementById('ai-panel').style.display='none'" style="background:none; border:none; color:#8b949e; cursor:pointer; font-size:16px;">&times;</button>
+    </div>
+    <div id="ai-summary" style="font-size:13px; line-height:1.6; margin-bottom:12px;"></div>
+    <div id="ai-details"></div>
+  </div>
+
+  <div style="margin-bottom:20px;">
+    <button onclick="runAIAnalysis()" id="ai-btn" style="background:#8957e5; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:13px;">Analyze Events with AI</button>
+    <span id="ai-status" style="font-size:12px; color:#8b949e; margin-left:8px;"></span>
+  </div>
+
   <div class="grid">
     <div class="card">
       <div class="label">Total Events</div>
@@ -818,6 +832,55 @@ document.addEventListener('click', function(e) {
   var replayBtn = e.target.closest('[data-replay-id]');
   if (replayBtn) replayEvent(replayBtn.getAttribute('data-replay-id'));
 });
+
+async function runAIAnalysis() {
+  const tenant = document.getElementById('tenant-input').value.trim();
+  if (!tenant) { alert('Enter a tenant ID first'); return; }
+  var btn = document.getElementById('ai-btn');
+  var aiStatus = document.getElementById('ai-status');
+  btn.disabled = true;
+  aiStatus.textContent = 'Analyzing events...';
+
+  try {
+    var res = await fetch(BASE + '/api/analyze?tenant_id=' + tenant, { method: 'POST' });
+    var data = await res.json();
+    var panel = document.getElementById('ai-panel');
+    panel.style.display = 'block';
+
+    var modeLabel = data.mode === 'ai' ? 'Claude AI' : 'Structured';
+    var summaryHTML = '<p style="color:#e1e4e8;">' + esc(data.summary) + '</p>';
+
+    var detailsHTML = '';
+    if (data.details && data.details.length > 0) {
+      detailsHTML += '<div style="margin-bottom:12px;"><strong style="color:#8b949e;font-size:12px;">DETAILS</strong>';
+      detailsHTML += '<ul style="margin:4px 0 0 16px;font-size:12px;color:#e1e4e8;">';
+      data.details.forEach(function(d) { detailsHTML += '<li style="padding:2px 0;">' + esc(d) + '</li>'; });
+      detailsHTML += '</ul></div>';
+    }
+
+    if (data.risks && data.risks.length > 0) {
+      detailsHTML += '<div style="margin-bottom:12px;"><strong style="color:#f85149;font-size:12px;">RISKS</strong>';
+      detailsHTML += '<ul style="margin:4px 0 0 16px;font-size:12px;color:#f85149;">';
+      data.risks.forEach(function(r) { detailsHTML += '<li style="padding:2px 0;">' + esc(r) + '</li>'; });
+      detailsHTML += '</ul></div>';
+    }
+
+    if (data.recommendations && data.recommendations.length > 0) {
+      detailsHTML += '<div><strong style="color:#3fb950;font-size:12px;">RECOMMENDATIONS</strong>';
+      detailsHTML += '<ol style="margin:4px 0 0 16px;font-size:12px;color:#3fb950;">';
+      data.recommendations.forEach(function(r) { detailsHTML += '<li style="padding:2px 0;">' + esc(r) + '</li>'; });
+      detailsHTML += '</ol></div>';
+    }
+
+    document.getElementById('ai-summary').innerHTML = '<span style="font-size:10px;color:#d2a8ff;background:#2d1b4e;padding:2px 6px;border-radius:4px;margin-right:8px;">' + modeLabel + '</span>' + summaryHTML;
+    document.getElementById('ai-details').innerHTML = detailsHTML;
+    aiStatus.textContent = 'Analysis complete (' + data.mode + ')';
+    setTimeout(function() { aiStatus.textContent = ''; }, 5000);
+  } catch (err) {
+    aiStatus.textContent = 'Error: ' + err.message;
+  }
+  btn.disabled = false;
+}
 
 function applyFilters() {
   loadDashboard();

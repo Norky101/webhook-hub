@@ -9,6 +9,7 @@ import { connectionsHTML } from "./connections";
 import { getProviderHealthScores, sendHealthDigest } from "./health-scores";
 import { checkCorrelations } from "./correlation";
 import { evaluateAlertRules } from "./alerting";
+import { analyzeEvents } from "./ai-analysis";
 import { executeAutomations } from "./automation";
 import { generateWebhook, simulatorProviders } from "./simulator";
 
@@ -20,6 +21,7 @@ export type Bindings = {
   TWILIO_ACCOUNT_SID?: string;
   TWILIO_AUTH_TOKEN?: string;
   TWILIO_FROM_NUMBER?: string;
+  ANTHROPIC_API_KEY?: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -494,6 +496,16 @@ app.delete("/api/playbooks/:id", async (c) => {
   const { id } = c.req.param();
   await c.env.DB.prepare("DELETE FROM remediation_playbooks WHERE id = ?").bind(id).run();
   return c.json({ status: "deleted" });
+});
+
+// ─── AI Analysis ────────────────────────────────────────
+
+app.post("/api/analyze", async (c) => {
+  const tenant_id = c.req.query("tenant_id");
+  if (!tenant_id) return c.json({ error: "tenant_id is required" }, 400);
+
+  const analysis = await analyzeEvents(c.env.DB, tenant_id, c.env.ANTHROPIC_API_KEY);
+  return c.json(analysis);
 });
 
 // ─── Automation Workflows API ────────────────────────────

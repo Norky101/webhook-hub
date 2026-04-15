@@ -259,7 +259,17 @@ Actions:
 
 **Resilience:** Actions execute in sequence but a failure in one doesn't stop the chain. Each action result (success/fail) is captured in the workflow result for debugging.
 
-## 29. End-to-end testing against the live URL
+## 29. AI-native event analysis: the platform that thinks
+
+**Considered:** Dashboard-only monitoring (humans interpret data), pre-built analytics, or LLM-powered analysis
+**Chose:** AI analysis endpoint powered by Claude — with structured fallback when no API key is configured
+**Why:** An ops person looking at 100 events across 11 providers can't spot cross-provider patterns, predict failures, or prioritize risks in real time. An LLM can. "Analyze the last hour" and get back: "Stripe had 3 payment failures from the same IP range — possible fraud. PagerDuty incidents correlate with a GitHub deploy 15 minutes earlier — likely a bad release. Recommendation: roll back."
+
+**Graceful degradation:** If no Anthropic API key is configured, the endpoint returns a structured analysis built from real event data — provider health scores, failure counts, severity breakdowns, risk flags. Not dummy data. The structured mode is useful on its own; the AI mode adds interpretation and prediction.
+
+**Why this matters for SprintMode:** Aaron is "all-in on AI agents." This feature turns webhook-hub from a monitoring tool into an AI-native ops platform. The platform doesn't just collect events — it understands them. There's nothing comparable on the market.
+
+## 30. End-to-end testing against the live URL
 
 **Considered:** Unit tests only (mock D1), integration tests with Miniflare, or full end-to-end tests against the deployed production URL
 **Chose:** Both — 18 unit tests with mock D1 for fast iteration, plus 22 end-to-end tests curled against the live Cloudflare Worker
