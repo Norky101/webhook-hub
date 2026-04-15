@@ -306,7 +306,13 @@ Actions:
 **Chose:** Account page with profile, subscription details, real usage stats, and tier comparison
 **Why:** This shows the platform is a product, not a project. The tier comparison (Free/Pro/Business/Enterprise) shows Aaron the monetization strategy. The usage stats pull real data from the API — actual event count, active providers, forwarding channels. Even though auth isn't built, the account page demonstrates what the user experience would look like for a paying customer.
 
-## 35. End-to-end testing against the live URL
+## 35. Limit dashboard to 10 recent events: density over completeness
+
+**Considered:** Showing all events (50+), paginated tables, or a concise recent view
+**Chose:** 10 most recent events on the dashboard, with search/filter/export for deeper investigation
+**Why:** The dashboard is a glance, not a database browser. An ops person needs to see "what just happened" — not scroll through 50 rows. 10 events fits on one screen without scrolling. If they need more, the search bar, provider filter, and CSV export cover it. This is the same pattern Datadog and PagerDuty use — recent activity is short, investigation tools are deep.
+
+## 36. End-to-end testing against the live URL
 
 **Considered:** Unit tests only (mock D1), integration tests with Miniflare, or full end-to-end tests against the deployed production URL
 **Chose:** Both — 18 unit tests with mock D1 for fast iteration, plus 22 end-to-end tests curled against the live Cloudflare Worker
