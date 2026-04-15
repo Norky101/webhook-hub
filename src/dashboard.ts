@@ -410,10 +410,11 @@ const PROVIDER_COLORS = {
   gusto: '#f45d48',
   salesforce: '#00a1e0',
   pagerduty: '#06ac38',
-  zendesk: '#03363d',
+  zendesk: '#17494d',
   stripe: '#635bff',
   datadog: '#632ca6',
   github: '#8b949e',
+  system: '#d2a8ff',
 };
 const BASE = location.origin;
 let refreshTimer = null;
