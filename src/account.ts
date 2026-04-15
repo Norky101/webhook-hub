@@ -75,7 +75,9 @@ export function accountHTML(): string {
     <div class="nav">
       <a href="/dashboard">Dashboard</a>
       <a href="/connections">Connections</a>
+      <a href="/agents">Agents</a>
       <a href="/account">Account</a>
+      <a href="/account#plans" style="font-size:12px;color:white;background:#238636;padding:4px 12px;border-radius:12px;text-decoration:none;font-weight:600;">Upgrade</a>
     </div>
   </div>
 

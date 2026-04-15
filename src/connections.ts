@@ -99,6 +99,7 @@ export function connectionsHTML(): string {
     <div class="nav">
       <a href="/dashboard">Dashboard</a>
       <a href="/connections">Connections</a>
+      <a href="/agents">Agents</a>
       <a href="/account">Account</a>
       <a href="/account#plans" style="font-size:12px;color:white;background:#238636;padding:4px 12px;border-radius:12px;text-decoration:none;font-weight:600;">Upgrade</a>
     </div>
@@ -164,43 +165,8 @@ export function connectionsHTML(): string {
     </table>
   </div>
 
-  <div class="section">
-    <h2>Agent API</h2>
-    <p style="font-size:12px; color:#8b949e; margin-bottom:12px;">Connect AI agents (OpenClaw, LangChain, CrewAI, GPT Actions) to listen for events and take automated actions.</p>
-    <div class="channel-grid">
-      <div class="channel-card active" style="border-color:#d2a8ff;">
-        <div class="channel-header">
-          <span class="channel-name" style="color:#d2a8ff;">OpenAPI Spec</span>
-          <button onclick="copyToClipboard(BASE+'/api/openapi.json')" style="background:#30363d;color:#e1e4e8;border:1px solid #484f58;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">Copy URL</button>
-        </div>
-        <div class="channel-status">Machine-readable API discovery</div>
-        <div class="channel-dest" id="openapi-url"></div>
-      </div>
-      <div class="channel-card active" style="border-color:#d2a8ff;">
-        <div class="channel-header">
-          <span class="channel-name" style="color:#d2a8ff;">Agent Event Feed</span>
-          <button onclick="copyToClipboard(BASE+'/api/agent/feed?tenant_id='+document.getElementById('tenant-input').value)" style="background:#30363d;color:#e1e4e8;border:1px solid #484f58;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">Copy URL</button>
-        </div>
-        <div class="channel-status">Events with suggested actions for agents</div>
-        <div class="channel-dest" id="feed-url"></div>
-      </div>
-      <div class="channel-card active" style="border-color:#d2a8ff;">
-        <div class="channel-header">
-          <span class="channel-name" style="color:#d2a8ff;">Agent Actions</span>
-          <button onclick="copyToClipboard(BASE+'/api/agent/action')" style="background:#30363d;color:#e1e4e8;border:1px solid #484f58;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">Copy URL</button>
-        </div>
-        <div class="channel-status">POST — 6 actions: replay, forwarding, playbooks, automations, alerts, toggle</div>
-        <div class="channel-dest" id="action-url"></div>
-      </div>
-      <div class="channel-card active" style="border-color:#d2a8ff;">
-        <div class="channel-header">
-          <span class="channel-name" style="color:#d2a8ff;">AI Analysis</span>
-          <button onclick="copyToClipboard(BASE+'/api/analyze?tenant_id='+document.getElementById('tenant-input').value)" style="background:#30363d;color:#e1e4e8;border:1px solid #484f58;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">Copy URL</button>
-        </div>
-        <div class="channel-status">POST — Claude-powered or structured event analysis</div>
-        <div class="channel-dest" id="analyze-url"></div>
-      </div>
-    </div>
+  <div class="section" style="text-align:center;padding:20px 0;">
+    <a href="/agents" style="color:#d2a8ff;text-decoration:none;font-size:14px;">View Agent API &rarr;</a>
   </div>
 
 <script>
@@ -218,7 +184,6 @@ async function loadConnections() {
   const tenant = document.getElementById('tenant-input').value.trim();
   if (!tenant) return;
 
-  updateAgentURLs();
   loadProviders();
 
   // Load forwarding rules
@@ -345,13 +310,6 @@ function copyToClipboard(text) {
   });
 }
 
-function updateAgentURLs() {
-  var tenant = document.getElementById('tenant-input').value.trim() || 'demo_tenant';
-  document.getElementById('openapi-url').textContent = BASE + '/api/openapi.json';
-  document.getElementById('feed-url').textContent = BASE + '/api/agent/feed?tenant_id=' + tenant;
-  document.getElementById('action-url').textContent = BASE + '/api/agent/action';
-  document.getElementById('analyze-url').textContent = BASE + '/api/analyze?tenant_id=' + tenant;
-}
 
 async function toggleRule(id, newActive) {
   await fetch(BASE + '/api/forwarding/' + id, {

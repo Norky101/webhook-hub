@@ -7,6 +7,8 @@ import { forwardEvent } from "./forwarding";
 import { dashboardHTML } from "./dashboard";
 import { connectionsHTML } from "./connections";
 import { accountHTML } from "./account";
+import { presentationHTML } from "./presentation";
+import { agentsPageHTML } from "./agents-page";
 import { getProviderHealthScores, sendHealthDigest } from "./health-scores";
 import { checkCorrelations } from "./correlation";
 import { evaluateAlertRules } from "./alerting";
@@ -68,6 +70,14 @@ app.get("/connections", (c) => {
 
 app.get("/account", (c) => {
   return c.html(accountHTML());
+});
+
+app.get("/agents", (c) => {
+  return c.html(agentsPageHTML());
+});
+
+app.get("/presentation", (c) => {
+  return c.html(presentationHTML());
 });
 
 // ─── Webhook Receiver ───────────────────────────────────
