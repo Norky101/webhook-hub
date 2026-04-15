@@ -246,7 +246,7 @@ export function dashboardHTML(): string {
   <div class="section">
     <h2 class="collapsible" onclick="toggleSection('health')"><span class="arrow open" id="arrow-health">&#9654;</span> Provider Health</h2>
     <div class="collapsible-content" id="section-health">
-      <div id="health-scores" style="display:flex; gap:12px; flex-wrap:wrap;">
+      <div id="health-scores" style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
         <div class="empty">Loading health scores...</div>
       </div>
     </div>
