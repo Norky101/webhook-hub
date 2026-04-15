@@ -342,8 +342,7 @@ This project was built entirely using Claude Code as the primary development too
 - Rate limiting per tenant
 - Auth + login UI (D1-based)
 - Alert acknowledge/resolve flow — silence alerts when working the issue
-- More providers (BambooHR, DocuSign, Notion, Mailchimp)
-- Mobile responsive dashboard
+- More providers (BambooHR, DocuSign, Notion, Mailchimp → hit 15)
 
 **Production:**
 - Stripe billing (tiered pricing: Free/Pro/Business/Enterprise)
