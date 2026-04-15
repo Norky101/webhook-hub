@@ -160,6 +160,13 @@ Claude Code (CLI) — Claude Opus, max effort. (Upgraded to the $100 subscriptio
 - Auto-loads demo_tenant by default
 - **Commit:** `Phase 19: connections page`
 
+### Session 19 — Event Detail Modal (19:15–19:25)
+- Click any event row → modal overlay with full detail
+- Shows: all metadata, raw JSON payload (syntax formatted), matching remediation playbooks
+- Replay button to re-process event from modal
+- Close with X button, click outside, or Escape key
+- **Commit:** `Phase 20: event detail modal`
+
 ---
 
 ## Process Notes

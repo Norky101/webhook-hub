@@ -106,6 +106,36 @@ export function dashboardHTML(): string {
     .refresh-note { font-size: 11px; color: #484f58; }
     .colors { display: flex; gap: 4px; }
     .colors span { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; padding: 24px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+      max-width: 700px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 24px;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .modal-header h2 { font-size: 16px; font-weight: 600; }
+    .modal-close {
+      background: none; border: none; color: #8b949e; font-size: 20px; cursor: pointer; padding: 4px 8px;
+    }
+    .modal-close:hover { color: #e1e4e8; }
+    .detail-grid { display: grid; grid-template-columns: 120px 1fr; gap: 8px; margin-bottom: 16px; }
+    .detail-label { font-size: 12px; color: #8b949e; padding: 4px 0; }
+    .detail-value { font-size: 13px; padding: 4px 0; }
+    .payload-box {
+      background: #0d1117; border: 1px solid #21262d; border-radius: 6px;
+      padding: 12px; font-family: monospace; font-size: 12px; white-space: pre-wrap;
+      word-break: break-all; max-height: 300px; overflow-y: auto; line-height: 1.5;
+    }
+    .remediation-box {
+      background: #1a1e2a; border-left: 3px solid #f0883e; border-radius: 4px;
+      padding: 12px 16px; margin-top: 12px;
+    }
+    .remediation-box h3 { font-size: 14px; color: #f0883e; margin-bottom: 8px; }
+    .remediation-box ol { padding-left: 20px; font-size: 13px; }
+    .remediation-box li { padding: 2px 0; }
     #error-banner {
       display: none; background: #3d1418; border: 1px solid #f85149; color: #f85149;
       padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; font-size: 13px;
@@ -320,6 +350,16 @@ export function dashboardHTML(): string {
     </div>
   </div>
 
+  <div class="modal-overlay" id="event-modal" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Event Detail</h2>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div id="modal-body">Loading...</div>
+    </div>
+  </div>
+
 <script>
 const PROVIDER_COLORS = {
   hubspot: '#ff7a59',
@@ -454,7 +494,7 @@ async function loadDashboard() {
       eventsTable.innerHTML = '<tr><td colspan="6" class="empty">' + (searchTerm ? 'No events matching "' + esc(searchTerm) + '"' : 'No events') + '</td></tr>';
     } else {
       eventsTable.innerHTML = evts.map(e =>
-        '<tr>'
+        '<tr onclick="openEventModal(\'' + e.id + '\')" style="cursor:pointer;">'
         + '<td>' + fmtTime(e.received_at) + '</td>'
         + '<td>' + e.provider + '</td>'
         + '<td>' + e.event_type + '</td>'
@@ -647,6 +687,89 @@ async function deleteRule(id) {
   await fetch(BASE + '/api/forwarding/' + id, { method: 'DELETE' });
   loadForwardingRules();
 }
+
+async function openEventModal(eventId) {
+  const modal = document.getElementById('event-modal');
+  const body = document.getElementById('modal-body');
+  const title = document.getElementById('modal-title');
+  modal.classList.add('open');
+  body.innerHTML = '<div class="empty">Loading...</div>';
+
+  try {
+    const event = await api('/api/events/' + eventId);
+
+    title.textContent = event.provider + ' — ' + event.event_type;
+
+    let html = '<div class="detail-grid">';
+    html += '<div class="detail-label">Event ID</div><div class="detail-value" style="font-family:monospace;font-size:12px;">' + esc(event.id) + '</div>';
+    html += '<div class="detail-label">Provider</div><div class="detail-value">' + esc(event.provider) + '</div>';
+    html += '<div class="detail-label">Event Type</div><div class="detail-value">' + esc(event.event_type) + '</div>';
+    html += '<div class="detail-label">Severity</div><div class="detail-value"><span class="badge ' + event.severity + '">' + event.severity + '</span></div>';
+    html += '<div class="detail-label">Status</div><div class="detail-value"><span class="badge ' + event.status + '">' + event.status + '</span></div>';
+    html += '<div class="detail-label">Summary</div><div class="detail-value">' + esc(event.summary) + '</div>';
+    html += '<div class="detail-label">Tenant</div><div class="detail-value">' + esc(event.tenant_id) + '</div>';
+    html += '<div class="detail-label">Received</div><div class="detail-value">' + esc(event.received_at) + '</div>';
+    html += '<div class="detail-label">Processed</div><div class="detail-value">' + esc(event.processed_at || '—') + '</div>';
+    html += '</div>';
+
+    // Raw payload
+    html += '<h3 style="font-size:13px;color:#8b949e;margin:16px 0 8px;">Raw Payload</h3>';
+    const payload = typeof event.raw_payload === 'string' ? event.raw_payload : JSON.stringify(event.raw_payload, null, 2);
+    html += '<div class="payload-box">' + esc(payload) + '</div>';
+
+    // Remediation (fetch playbooks for this tenant)
+    try {
+      const tenant = document.getElementById('tenant-input').value.trim();
+      const pb = await api('/api/playbooks?tenant_id=' + tenant);
+      const playbooks = (pb.playbooks || []).filter(function(p) {
+        if (p.provider_filter && p.provider_filter !== event.provider) return false;
+        const pat = p.event_pattern;
+        if (pat === '*') return true;
+        if (pat === event.event_type) return true;
+        if (pat.endsWith('.*') && event.event_type.startsWith(pat.slice(0,-2) + '.')) return true;
+        if (event.event_type.startsWith(pat + '.')) return true;
+        return false;
+      });
+      if (playbooks.length > 0) {
+        playbooks.forEach(function(p) {
+          let steps = [];
+          try { steps = JSON.parse(p.steps); } catch {}
+          html += '<div class="remediation-box">';
+          html += '<h3>' + esc(p.title) + '</h3>';
+          html += '<ol>' + steps.map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ol>';
+          html += '</div>';
+        });
+      }
+    } catch (e) { /* playbooks optional */ }
+
+    // Actions
+    html += '<div style="margin-top:16px;display:flex;gap:8px;">';
+    html += '<button onclick="replayEvent(\'' + event.id + '\')" style="background:#238636;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Replay Event</button>';
+    html += '<button onclick="closeModal()" style="background:#30363d;color:#e1e4e8;border:1px solid #484f58;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Close</button>';
+    html += '</div>';
+
+    body.innerHTML = html;
+  } catch (err) {
+    body.innerHTML = '<div class="empty">Error loading event: ' + esc(err.message) + '</div>';
+  }
+}
+
+function closeModal() {
+  document.getElementById('event-modal').classList.remove('open');
+}
+
+async function replayEvent(eventId) {
+  try {
+    await fetch(BASE + '/api/replay/' + eventId, { method: 'POST' });
+    closeModal();
+    loadDashboard();
+  } catch (err) { alert('Replay failed: ' + err.message); }
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
 
 function applyFilters() {
   loadDashboard();
