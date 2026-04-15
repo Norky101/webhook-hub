@@ -442,7 +442,7 @@ async function loadDashboard() {
     const filterProvider = document.getElementById('filter-provider').value;
     const filterSeverity = document.getElementById('filter-severity').value;
     const filterStatus = document.getElementById('filter-status').value;
-    let eventsUrl = '/api/events?tenant_id=' + tenant + '&limit=50';
+    let eventsUrl = '/api/events?tenant_id=' + tenant + '&limit=10';
     if (filterProvider) eventsUrl += '&provider=' + filterProvider;
     if (filterStatus) eventsUrl += '&status=' + filterStatus;
 
