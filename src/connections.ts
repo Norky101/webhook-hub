@@ -112,6 +112,17 @@ export function connectionsHTML(): string {
 
   <div class="section">
     <h2>Correlation Rules</h2>
+    <div style="display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; align-items:center;">
+      <input type="text" id="corr-name" placeholder="Rule name" style="background:#161b22;border:1px solid #30363d;color:#e1e4e8;padding:6px 10px;border-radius:6px;font-size:12px;width:130px;">
+      <input type="text" id="corr-provider-a" placeholder="Provider A" style="background:#161b22;border:1px solid #30363d;color:#e1e4e8;padding:6px 10px;border-radius:6px;font-size:12px;width:100px;">
+      <input type="text" id="corr-pattern-a" placeholder="Pattern A (e.g. payment.*)" style="background:#161b22;border:1px solid #30363d;color:#e1e4e8;padding:6px 10px;border-radius:6px;font-size:12px;width:140px;">
+      <input type="text" id="corr-provider-b" placeholder="Provider B" style="background:#161b22;border:1px solid #30363d;color:#e1e4e8;padding:6px 10px;border-radius:6px;font-size:12px;width:100px;">
+      <input type="text" id="corr-pattern-b" placeholder="Pattern B (e.g. ticket.*)" style="background:#161b22;border:1px solid #30363d;color:#e1e4e8;padding:6px 10px;border-radius:6px;font-size:12px;width:140px;">
+      <input type="number" id="corr-window" placeholder="30" value="30" style="background:#161b22;border:1px solid #30363d;color:#e1e4e8;padding:6px 10px;border-radius:6px;font-size:12px;width:50px;">
+      <span style="font-size:11px;color:#8b949e;">min</span>
+      <input type="text" id="corr-action" placeholder="Action to take" style="background:#161b22;border:1px solid #30363d;color:#e1e4e8;padding:6px 10px;border-radius:6px;font-size:12px;flex:1;min-width:120px;">
+      <button onclick="addCorrelation()" style="background:#238636;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Add Rule</button>
+    </div>
     <table>
       <thead>
         <tr><th>Name</th><th>Provider A</th><th>Pattern A</th><th>Provider B</th><th>Pattern B</th><th>Window</th><th>Action</th><th></th></tr>
@@ -124,6 +135,13 @@ export function connectionsHTML(): string {
 
   <div class="section">
     <h2>Remediation Playbooks</h2>
+    <div style="display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; align-items:center;">
+      <input type="text" id="pb-pattern" placeholder="Event pattern (e.g. incident.*)" style="background:#161b22;border:1px solid #30363d;color:#e1e4e8;padding:6px 10px;border-radius:6px;font-size:12px;width:160px;">
+      <input type="text" id="pb-provider" placeholder="Provider (or blank for all)" style="background:#161b22;border:1px solid #30363d;color:#e1e4e8;padding:6px 10px;border-radius:6px;font-size:12px;width:150px;">
+      <input type="text" id="pb-title" placeholder="Playbook title" style="background:#161b22;border:1px solid #30363d;color:#e1e4e8;padding:6px 10px;border-radius:6px;font-size:12px;width:150px;">
+      <input type="text" id="pb-steps" placeholder="Step 1 | Step 2 | Step 3 (pipe separated)" style="background:#161b22;border:1px solid #30363d;color:#e1e4e8;padding:6px 10px;border-radius:6px;font-size:12px;flex:1;min-width:200px;">
+      <button onclick="addPlaybook()" style="background:#238636;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Add Playbook</button>
+    </div>
     <table>
       <thead>
         <tr><th>Event Pattern</th><th>Provider</th><th>Title</th><th>Steps</th><th></th></tr>
@@ -309,6 +327,54 @@ async function toggleRule(id, newActive) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ active: newActive }),
   });
+  loadConnections();
+}
+
+async function addCorrelation() {
+  var tenant = document.getElementById('tenant-input').value.trim();
+  if (!tenant) { alert('Enter a tenant ID first'); return; }
+  var name = document.getElementById('corr-name').value.trim();
+  var provA = document.getElementById('corr-provider-a').value.trim();
+  var patA = document.getElementById('corr-pattern-a').value.trim();
+  var provB = document.getElementById('corr-provider-b').value.trim();
+  var patB = document.getElementById('corr-pattern-b').value.trim();
+  var window = parseInt(document.getElementById('corr-window').value) || 30;
+  var action = document.getElementById('corr-action').value.trim();
+  if (!name || !provA || !patA || !provB || !patB || !action) { alert('All fields required'); return; }
+
+  await fetch(BASE + '/api/correlations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tenant_id: tenant, name: name, provider_a: provA, event_pattern_a: patA, provider_b: provB, event_pattern_b: patB, time_window_minutes: window, action_description: action }),
+  });
+  document.getElementById('corr-name').value = '';
+  document.getElementById('corr-provider-a').value = '';
+  document.getElementById('corr-pattern-a').value = '';
+  document.getElementById('corr-provider-b').value = '';
+  document.getElementById('corr-pattern-b').value = '';
+  document.getElementById('corr-action').value = '';
+  loadConnections();
+}
+
+async function addPlaybook() {
+  var tenant = document.getElementById('tenant-input').value.trim();
+  if (!tenant) { alert('Enter a tenant ID first'); return; }
+  var pattern = document.getElementById('pb-pattern').value.trim();
+  var provider = document.getElementById('pb-provider').value.trim();
+  var title = document.getElementById('pb-title').value.trim();
+  var stepsRaw = document.getElementById('pb-steps').value.trim();
+  if (!pattern || !title || !stepsRaw) { alert('Pattern, title, and steps required'); return; }
+  var steps = stepsRaw.split('|').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+
+  await fetch(BASE + '/api/playbooks', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tenant_id: tenant, event_pattern: pattern, provider_filter: provider || undefined, title: title, steps: steps }),
+  });
+  document.getElementById('pb-pattern').value = '';
+  document.getElementById('pb-provider').value = '';
+  document.getElementById('pb-title').value = '';
+  document.getElementById('pb-steps').value = '';
   loadConnections();
 }
 

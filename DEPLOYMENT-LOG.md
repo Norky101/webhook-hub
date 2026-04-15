@@ -228,6 +228,15 @@ Claude Code (CLI) — Claude Opus, max effort. (Upgraded to the $100 subscriptio
 - 6 agent actions: replay, forwarding rules, playbooks, automations, alerts, toggle rules
 - **Commit:** `Phase 29: AI agent API layer`
 
+### Session 28 — Connections: Create Forms + Agent API UI (23:25–23:40)
+- Inline create forms for correlation rules and remediation playbooks
+- Correlation: name, provider A/B, pattern A/B, time window, action description
+- Playbooks: event pattern, provider, title, steps (pipe-separated)
+- Agent API section with 4 cards: OpenAPI, feed, actions, analysis
+- Copy URL buttons, POST method labels, tenant-aware URLs
+- Toggle switches on forwarding rules (on/off)
+- **Commits:** `Phase 29b` + `Phase 29c` + `Phase 30`
+
 ---
 
 ## Process Notes
