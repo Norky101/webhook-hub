@@ -199,7 +199,13 @@ This is the path from "webhook monitoring tool" to "business operations automati
 
 **Evaluated every 5 minutes** on the existing cron trigger. Alert events are stored in the events table (visible on dashboard) and forwarded through all channels (Slack, email, SMS, voice call).
 
-## 25. Event detail modal: inspect, understand, act
+## 25. Dashboard polish: loading states and error handling
+
+**Considered:** No loading indicators (data just appears), skeleton screens, or a loading bar
+**Chose:** Loading bar + pulse animation + timestamp + error banner
+**Why:** When the dashboard auto-refreshes every 30 seconds, the user needs to know two things: "is it loading?" and "when was the last successful update?" The blue loading bar at the top gives immediate visual feedback that something is happening. Card values pulse during loading so you know the numbers are about to change. The "Updated 8:35 PM" timestamp answers "is this data fresh?" at a glance. And if the API fails, a red error banner appears instead of silently showing stale data. Every one of these prevents the user from wondering "is this thing working?"
+
+## 26. Event detail modal: inspect, understand, act
 
 **Considered:** Separate event detail page, inline expand, or modal overlay
 **Chose:** Modal overlay — click any event row to see full detail without leaving the dashboard
