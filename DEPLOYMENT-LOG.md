@@ -191,6 +191,12 @@ Claude Code (CLI) — Claude Opus, max effort. (Upgraded to the $100 subscriptio
 - Loading bar progresses: 30% → 70% → 100% → hidden
 - **Commit:** `Phase 23: dashboard polish — loading bar, timestamps, error states`
 
+### Session 23 — End-to-End Live Testing (20:50–21:00)
+- Ran 22 end-to-end tests against the live production URL
+- All 22 passed: 11 providers, events API, tenant isolation, dedup, replay, pagination, health scores, export, simulator, all CRUD APIs
+- Documented in DECISIONS.md as decision #28
+- **No commit needed** — tests run against live URL, not code changes
+
 ---
 
 ## Process Notes

@@ -233,6 +233,36 @@ This is the path from "webhook monitoring tool" to "business operations automati
 
 **For production:** Auth (D1-based sessions), rate limiting (CF Workers rate limiting API), signature enforcement (per-tenant secret store in KV), input size limits, CSRF tokens, and encrypted forwarding destinations.
 
+## 28. End-to-end testing against the live URL
+
+**Considered:** Unit tests only (mock D1), integration tests with Miniflare, or full end-to-end tests against the deployed production URL
+**Chose:** Both — 18 unit tests with mock D1 for fast iteration, plus 22 end-to-end tests curled against the live Cloudflare Worker
+**Why:** Unit tests validate logic. Live tests validate reality. D1 query behavior, network latency, cron triggers, Twilio delivery, Slack formatting — none of these are testable with mocks. The live test suite hits every endpoint and verifies every feature works in production, not just in theory.
+
+**22 live tests, all passing:**
+
+| # | Test | What it proves |
+|---|---|---|
+| 1 | Health check | DB connected, 11 providers registered |
+| 2 | Dashboard loads | HTML served correctly |
+| 3 | Connections page loads | Second page works |
+| 4 | Root redirects | `/` → `/dashboard` |
+| 5-15 | All 11 providers accept webhooks | Every normalizer works in production |
+| 16 | Events API returns correct count | D1 writes and reads work |
+| 17 | Tenant isolation | Wrong tenant sees 0 events |
+| 18 | Stats endpoint | Aggregation queries correct |
+| 19 | Duplicate rejection | Idempotency works in real D1 |
+| 20 | Single event detail | Event lookup by ID |
+| 21 | Replay | Re-processes from raw payload |
+| 22 | Unknown provider → 400 | Error handling |
+| 23 | Invalid JSON → 400 | Input validation |
+| 24 | Missing tenant_id → 400 | Required param enforcement |
+| 25 | Pagination | Limit + has_more works |
+| 26 | Provider health scores | Health scoring query works |
+| 27 | CSV export | File download works |
+| 28 | Simulator | Generates and processes events |
+| 29-32 | Forwarding, alerts, correlations, playbooks APIs | All CRUD endpoints respond |
+
 ---
 
 ## The Thinking Behind The Build
