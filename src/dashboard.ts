@@ -284,6 +284,7 @@ export function dashboardHTML(): string {
       <option value="dead_letter">Dead Letter</option>
     </select>
     <button onclick="applyFilters()" style="background:#238636; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:13px;">Filter</button>
+    <button onclick="clearFilters()" id="clear-filters-btn" style="display:none; background:#30363d; color:#e1e4e8; border:1px solid #484f58; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px;">Clear filters</button>
     <button onclick="exportData('csv')" style="background:#30363d; color:#e1e4e8; border:1px solid #484f58; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px;">Export CSV</button>
     <button onclick="exportData('json')" style="background:#30363d; color:#e1e4e8; border:1px solid #484f58; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px;">Export JSON</button>
   </div>
@@ -839,6 +840,7 @@ document.addEventListener('click', function(e) {
   if (healthCard) {
     var prov = healthCard.getAttribute('data-health-provider');
     document.getElementById('filter-provider').value = prov;
+    document.getElementById('clear-filters-btn').style.display = 'inline-block';
     applyFilters();
     document.getElementById('section-events').scrollIntoView({ behavior: 'smooth' });
   }
@@ -893,7 +895,21 @@ async function runAIAnalysis() {
   btn.disabled = false;
 }
 
+function clearFilters() {
+  document.getElementById('filter-provider').value = '';
+  document.getElementById('filter-severity').value = '';
+  document.getElementById('filter-status').value = '';
+  document.getElementById('search-input').value = '';
+  document.getElementById('clear-filters-btn').style.display = 'none';
+  loadDashboard();
+}
+
 function applyFilters() {
+  var hasFilter = document.getElementById('filter-provider').value ||
+    document.getElementById('filter-severity').value ||
+    document.getElementById('filter-status').value ||
+    document.getElementById('search-input').value.trim();
+  document.getElementById('clear-filters-btn').style.display = hasFilter ? 'inline-block' : 'none';
   loadDashboard();
 }
 
