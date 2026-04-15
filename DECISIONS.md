@@ -64,7 +64,13 @@ Documenting every meaningful decision made during the build — what was conside
 **Chose:** Write full validation logic per provider, but don't enforce at the receiver yet
 **Why:** Enforcing signatures requires a per-tenant secret store (KV or env vars per tenant). Building that store is plumbing work that doesn't demonstrate architecture skill — it's just CRUD on secrets. Writing the validation logic proves I understand each provider's signature scheme. Leaving it unenforced keeps the system testable without needing real provider credentials. Documented as a known gap, not an oversight.
 
-## 11. One More Thing: Webhook Simulator
+## 11. Auth deferred — better to ship features than login forms
+
+**Considered:** Building user login, registration, session management, protected routes
+**Chose:** Defer auth entirely for the demo
+**Why:** Auth is infrastructure, not architecture. Multi-tenant isolation is already enforced via `tenant_id` in every query — Tenant A can't see Tenant B's data regardless of whether there's a login page. Building auth properly would take ~4 hours: users table, sessions, password hashing, middleware, UI, CSRF protection. That's 4 hours that produces a login page — something every tutorial app has. Those 4 hours were better spent building forwarding, correlation, alerting, and remediation — features that demonstrate product thinking and can't be found in a tutorial. The schema supports auth, the dashboard pattern supports login pages — it's the first thing in Sprint 2. Deliberate scope decision, not an oversight.
+
+## 12. One More Thing: Webhook Simulator
 
 **What:** A built-in endpoint (`POST /api/simulate/:provider/:tenant_id?count=N`) that generates realistic fake webhooks and sends them through the real pipeline — normalization, D1 storage, dedup, dashboard visibility.
 
@@ -79,19 +85,19 @@ Documenting every meaningful decision made during the build — what was conside
 
 **Dashboard integration:** The simulator is built directly into the dashboard UI. A dropdown lets you pick a single provider or "All Providers" (sends 5 events x 8 providers = 40 events). One click and the dashboard populates live — no curl, no terminal, no setup. The dashboard also auto-loads with `demo_tenant` so there's never a blank screen. This was an intentional UX decision: the first thing anyone sees should demonstrate the platform working, not ask them to configure something.
 
-## 12. Extra credit providers: Salesforce, PagerDuty, Zendesk
+## 13. Extra credit providers: Salesforce, PagerDuty, Zendesk
 
 **Considered:** Building all 10 extra credit providers from the spec
 **Chose:** 3 strategically selected extras (Salesforce, PagerDuty, Zendesk) — bringing the total to 8
 **Why:** These three cover the most distinct categories: enterprise CRM (Salesforce), engineering/incident management (PagerDuty), and support tickets (Zendesk). Each took ~10 minutes to stamp out using the registry pattern — proving the framework scales. Diminishing returns after 8 providers; the pattern is proven.
 
-## 13. Dashboard UX: collapsible sections, auto-load, built-in simulator
+## 14. Dashboard UX: collapsible sections, auto-load, built-in simulator
 
 **Considered:** Static dashboard that requires manual curl commands to populate
 **Chose:** Interactive dashboard that works out of the box
 **Why:** The spec says "something an ops person can glance at and immediately know if things are healthy or on fire." That means zero-friction: auto-loads a default tenant, simulate button right in the UI, collapsible sections so users control information density. Every UX decision was filtered through "would Aaron open this and immediately understand what's happening?"
 
-## 14. Sprint 1: Search, export, chart toggle — visible features first
+## 15. Sprint 1: Search, export, chart toggle — visible features first
 
 **Considered:** Building auth and Stripe first (infrastructure), or building visible dashboard features first
 **Chose:** Dashboard features: event search/filter, CSV/JSON export, bar/pie chart toggle
@@ -102,13 +108,13 @@ ee first, infrastructure second. A dashboard with search and export is more impr
 
 **Export design:** `GET /api/export?tenant_id=X&format=csv` returns a proper file download with Content-Disposition header. Supports the same provider/status filters. CSV uses proper quoting for values containing commas. Up to 5,000 events per export.
 
-## 15. Webhook forwarding — turning monitoring into automation
+## 16. Webhook forwarding — turning monitoring into automation
 
 **Considered:** Email-only notifications, Slack-only integration, or a generic forwarding engine
 **Chose:** One forwarding engine supporting 5 channels: email (Resend), Slack (Block Kit), SMS (Twilio), voice call (Twilio), webhook URL
 **Why:** Monitoring alone answers "what happened." Forwarding answers "who needs to know?" Building a generic engine with destination types means one architecture covers every channel. The forwarding rules table doesn't care about the destination type; the engine dispatches based on it.
 
-## 16. SMS and voice call alerts via Twilio — severity demands urgency
+## 17. SMS and voice call alerts via Twilio — severity demands urgency
 
 **Considered:** Email and Slack only, third-party alerting service (PagerDuty/OpsGenie), or building SMS/call directly with Twilio
 **Chose:** Twilio SMS + voice call as forwarding destinations, integrated into the same forwarding engine
@@ -131,25 +137,25 @@ ee first, infrastructure second. A dashboard with search and export is more impr
 
 **Credentials:** All stored as Cloudflare Workers secrets. Never in code, never in git.
 
-## 17. Notification sync: all channels receive the same alerts
+## 18. Notification sync: all channels receive the same alerts
 
 **Considered:** Independent rules per channel (email gets critical only, Slack gets everything)
 **Chose:** All forwarding rules use the same severity and provider filters
 **Why:** If a PagerDuty incident is worth sending to Slack, it's worth sending to email and SMS. Split policies create confusion. Ops teams need one source of truth for what counts as an alert.
 
-## 18. Remediation playbooks over automated actions
+## 19. Remediation playbooks over automated actions
 
 **Considered:** Alerts only, automated API calls, or human-readable playbooks
 **Chose:** Playbooks first — structured remediation steps attached to event patterns, included in all notifications
 **Why:** Automated actions are powerful but dangerous without guardrails — you don't want an auto-rollback firing on a false positive. Playbooks are the safe middle ground: the system tells you what happened AND what to do about it. The human decides whether to act.
 
-## 19. Scheduled health digests: push over pull
+## 20. Scheduled health digests: push over pull
 
 **Considered:** Dashboard-only health scores (pull), alert-on-degradation only (reactive), scheduled digests (proactive)
 **Chose:** Scheduled digest to Slack every 20 minutes + dashboard health cards
 **Why:** Dashboards are pull-based — someone has to open them. Digests are push-based. An ops team that gets a health report every 20 minutes sees trends: "HubSpot was 99% at 2pm, 87% at 2:40pm — something is degrading." That's impossible to spot by checking a dashboard sporadically.
 
-## 20. Cross-tool correlation as the product vision
+## 21. Cross-tool correlation as the product vision
 
 **The insight:** No single tool sees patterns across providers. Webhook-hub is the only system that sees events from all providers in one timeline — which means it's the only system that can correlate across them.
 
@@ -162,7 +168,7 @@ ee first, infrastructure second. A dashboard with search and export is more impr
 
 This is the path from "webhook monitoring tool" to "business operations automation platform."
 
-### 21. Connections page: one place to manage everything
+## 22. Connections page: one place to manage everything
 
 **Considered:** Managing forwarding rules, correlation rules, and playbooks all from the dashboard, or a separate dedicated page
 **Chose:** Dedicated `/connections` page linked from the dashboard header
@@ -170,13 +176,13 @@ This is the path from "webhook monitoring tool" to "business operations automati
 
 **What it shows:** Every forwarding channel (email, Slack, SMS, voice call, webhook URL) as a card with active/inactive status, severity filter, and rule name (not raw URLs — human-readable labels like "Slack alerts #webhook-alerts"). Plus the health digest Slack channel (configured via Worker secret, shown as a system channel). Below that: correlation rules and remediation playbooks with delete buttons.
 
-### 22. 11 providers: Stripe, Datadog, GitHub complete the coverage
+## 23. 11 providers: Stripe, Datadog, GitHub complete the coverage
 
 **Considered:** Stopping at 8 (already proved the framework), or pushing to double digits
 **Chose:** Added Stripe (revenue events), Datadog (infrastructure monitoring), GitHub (development lifecycle) — bringing total to 11
 **Why:** These three fill the most important gaps. Stripe is the #1 webhook integration for any SaaS — payment.failed, subscription.cancelled, invoice.paid are the events that directly map to revenue. Datadog covers infrastructure alerting (monitor triggered/recovered). GitHub covers the development pipeline (PR merged, deploy succeeded/failed). Together with the original 8, the platform now covers CRM, e-commerce, project management, support, HR, engineering, finance, and development. Each took ~10 minutes — the framework pattern continues to prove itself.
 
-### 23. Alerting rules engine: the platform watches so you don't have to
+## 24. Alerting rules engine: the platform watches so you don't have to
 
 **Considered:** Dashboard-only monitoring (pull), event-triggered alerts only (reactive), or threshold-based alerting (proactive)
 **Chose:** Metric-based alerting rules evaluated on cron, with cooldown to prevent alert fatigue
@@ -193,7 +199,7 @@ This is the path from "webhook monitoring tool" to "business operations automati
 
 **Evaluated every 5 minutes** on the existing cron trigger. Alert events are stored in the events table (visible on dashboard) and forwarded through all channels (Slack, email, SMS, voice call).
 
-### 24. Event detail modal: inspect, understand, act
+## 25. Event detail modal: inspect, understand, act
 
 **Considered:** Separate event detail page, inline expand, or modal overlay
 **Chose:** Modal overlay — click any event row to see full detail without leaving the dashboard
@@ -241,8 +247,9 @@ This project was built entirely using Claude Code as the primary development too
 - Enforce signature validation with a tenant secret store (Workers KV)
 - Rate limiting per tenant
 - Auth + login UI (D1-based)
-- Alerting rules engine — "notify when error rate > X"
+- Alert acknowledge/resolve flow — silence alerts when working the issue
 - More providers (BambooHR, DocuSign, Notion, Mailchimp)
+- Mobile responsive dashboard
 
 **Production:**
 - Stripe billing (tiered pricing: Free/Pro/Business/Enterprise)
