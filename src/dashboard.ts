@@ -103,6 +103,14 @@ export function dashboardHTML(): string {
     .badge.retrying { background: #3d2e00; color: #d29922; }
     .badge.dead_letter { background: #2d1b35; color: #bc8cff; }
     .empty { color: #484f58; font-style: italic; padding: 20px; text-align: center; }
+    .card { position: relative; }
+    .card .tooltip {
+      display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+      background: #30363d; color: #e1e4e8; padding: 8px 12px; border-radius: 6px;
+      font-size: 11px; line-height: 1.4; width: 220px; text-align: center;
+      margin-bottom: 8px; z-index: 50; pointer-events: none;
+    }
+    .card:hover .tooltip { display: block; }
     .loading-bar {
       position: fixed; top: 0; left: 0; height: 3px; background: #58a6ff;
       z-index: 200; transition: width 0.3s; border-radius: 0 2px 2px 0;
@@ -226,19 +234,23 @@ export function dashboardHTML(): string {
   </div>
 
   <div class="grid">
-    <div class="card" title="Total webhook events received and stored for this tenant">
+    <div class="card">
+      <div class="tooltip">Total webhook events received and stored for this tenant</div>
       <div class="label">Total Events</div>
       <div class="value blue" id="total-events">—</div>
     </div>
-    <div class="card" title="Number of events that failed processing in the last hour. High numbers may indicate a provider issue or payload changes.">
+    <div class="card">
+      <div class="tooltip">Events that failed processing in the last hour. High numbers may indicate a provider issue.</div>
       <div class="label">Error Rate (1h)</div>
       <div class="value" id="error-rate">—</div>
     </div>
-    <div class="card" title="Events that failed and are waiting to be retried. The system retries with exponential backoff: 1min, 5min, 30min, 2hr, 12hr.">
+    <div class="card">
+      <div class="tooltip">Events waiting to be retried. Retries with exponential backoff: 1min, 5min, 30min, 2hr, 12hr.</div>
       <div class="label">Retry Queue</div>
       <div class="value" id="retry-depth">—</div>
     </div>
-    <div class="card" title="Events that failed all 5 retry attempts. These need manual investigation — check the raw payload and provider status.">
+    <div class="card">
+      <div class="tooltip">Events that failed all 5 retries. Need manual investigation — check raw payload and provider status.</div>
       <div class="label">Dead Letters</div>
       <div class="value" id="dead-letters">—</div>
     </div>
