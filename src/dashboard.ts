@@ -264,6 +264,10 @@ export function dashboardHTML(): string {
       <option value="salesforce">Salesforce</option>
       <option value="pagerduty">PagerDuty</option>
       <option value="zendesk">Zendesk</option>
+      <option value="stripe">Stripe</option>
+      <option value="datadog">Datadog</option>
+      <option value="github">GitHub</option>
+      <option value="system">System</option>
     </select>
     <select id="filter-severity" style="background:#161b22; border:1px solid #30363d; color:#e1e4e8; padding:8px 12px; border-radius:6px; font-size:13px;">
       <option value="">All severities</option>
