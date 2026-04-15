@@ -66,6 +66,23 @@ CREATE TABLE IF NOT EXISTS remediation_playbooks (
 
 CREATE INDEX IF NOT EXISTS idx_remediation_tenant ON remediation_playbooks(tenant_id);
 
+-- Alert rules — metric-based threshold monitoring
+CREATE TABLE IF NOT EXISTS alert_rules (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  metric TEXT NOT NULL, -- error_rate, failed_count, retry_queue_depth, dead_letter_count, event_volume
+  provider_filter TEXT, -- NULL = all providers
+  threshold REAL NOT NULL,
+  window_minutes INTEGER NOT NULL DEFAULT 15,
+  comparison TEXT NOT NULL DEFAULT 'gt', -- gt, lt, gte, lte
+  active INTEGER NOT NULL DEFAULT 1,
+  last_triggered_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_alert_rules_tenant ON alert_rules(tenant_id, active);
+
 -- Cross-tool correlation rules
 CREATE TABLE IF NOT EXISTS correlation_rules (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -8,6 +8,7 @@ import { dashboardHTML } from "./dashboard";
 import { connectionsHTML } from "./connections";
 import { getProviderHealthScores, sendHealthDigest } from "./health-scores";
 import { checkCorrelations } from "./correlation";
+import { evaluateAlertRules } from "./alerting";
 import { generateWebhook, simulatorProviders } from "./simulator";
 
 /** Env bindings for Cloudflare Workers */
@@ -493,6 +494,58 @@ app.delete("/api/playbooks/:id", async (c) => {
   return c.json({ status: "deleted" });
 });
 
+// ─── Alert Rules API ────────────────────────────────────
+
+app.get("/api/alerts", async (c) => {
+  const tenant_id = c.req.query("tenant_id");
+  if (!tenant_id) return c.json({ error: "tenant_id is required" }, 400);
+  const result = await c.env.DB.prepare(
+    "SELECT * FROM alert_rules WHERE tenant_id = ? ORDER BY created_at DESC"
+  ).bind(tenant_id).all();
+  return c.json({ rules: result.results || [] });
+});
+
+app.post("/api/alerts", async (c) => {
+  const body = await c.req.json<{
+    tenant_id: string;
+    name: string;
+    metric: string;
+    provider_filter?: string;
+    threshold: number;
+    window_minutes?: number;
+    comparison?: string;
+  }>();
+
+  if (!body.tenant_id || !body.name || !body.metric || body.threshold === undefined) {
+    return c.json({ error: "tenant_id, name, metric, and threshold are required" }, 400);
+  }
+
+  const validMetrics = ["error_rate", "failed_count", "retry_queue_depth", "dead_letter_count", "event_volume"];
+  if (!validMetrics.includes(body.metric)) {
+    return c.json({ error: `metric must be one of: ${validMetrics.join(", ")}` }, 400);
+  }
+
+  await c.env.DB.prepare(
+    "INSERT INTO alert_rules (tenant_id, name, metric, provider_filter, threshold, window_minutes, comparison) VALUES (?, ?, ?, ?, ?, ?, ?)"
+  ).bind(
+    body.tenant_id,
+    body.name,
+    body.metric,
+    body.provider_filter || null,
+    body.threshold,
+    body.window_minutes || 15,
+    body.comparison || "gt"
+  ).run();
+
+  return c.json({ status: "created" }, 201);
+});
+
+app.delete("/api/alerts/:id", async (c) => {
+  const { id } = c.req.param();
+  await c.env.DB.prepare("DELETE FROM alert_rules WHERE id = ?").bind(id).run();
+  return c.json({ status: "deleted" });
+});
+
 // ─── Correlation Rules API ──────────────────────────────
 
 app.get("/api/correlations", async (c) => {
@@ -690,8 +743,16 @@ export default {
     // Process retry queue every minute
     ctx.waitUntil(processRetryQueue(env.DB));
 
-    // Send health digest to Slack every 20 minutes
+    // Evaluate alert rules every 5 minutes
     const minute = new Date(event.scheduledTime).getMinutes();
+    if (minute % 5 === 0) {
+      const twilioConfig = env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_FROM_NUMBER
+        ? { accountSid: env.TWILIO_ACCOUNT_SID, authToken: env.TWILIO_AUTH_TOKEN, fromNumber: env.TWILIO_FROM_NUMBER }
+        : undefined;
+      ctx.waitUntil(evaluateAlertRules(env.DB, env.RESEND_API_KEY, twilioConfig));
+    }
+
+    // Send health digest to Slack every 20 minutes
     if (minute % 20 === 0 && env.SLACK_HEALTH_WEBHOOK_URL) {
       ctx.waitUntil(sendHealthDigest(env.DB, env.SLACK_HEALTH_WEBHOOK_URL));
     }

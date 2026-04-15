@@ -167,6 +167,15 @@ Claude Code (CLI) — Claude Opus, max effort. (Upgraded to the $100 subscriptio
 - Close with X button, click outside, or Escape key
 - **Commit:** `Phase 20: event detail modal`
 
+### Session 20 — Alerting Rules Engine (19:35–19:55)
+- Metric-based alerting: error_rate, failed_count, retry_queue_depth, dead_letter_count, event_volume
+- Evaluated every 5 minutes on cron trigger
+- Cooldown prevents re-triggering during the same window
+- Alert events stored in events table + forwarded through all channels
+- CRUD API: GET/POST/DELETE /api/alerts
+- Supports per-provider filtering and comparison operators (gt, lt, gte, lte)
+- **Commit:** `Phase 21: alerting rules engine`
+
 ---
 
 ## Process Notes

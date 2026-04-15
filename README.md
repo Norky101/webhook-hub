@@ -386,6 +386,32 @@ curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/forwarding/tes
 
 ---
 
+### Alert Rules
+
+Metric-based threshold monitoring. Evaluated every 5 minutes. Alerts flow through all forwarding channels.
+
+**`GET /api/alerts?tenant_id=X`** — List alert rules
+
+**`POST /api/alerts`** — Create an alert rule
+
+```bash
+# Alert when HubSpot error rate exceeds 20% over 15 minutes
+curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/alerts \
+  -H "Content-Type: application/json" \
+  -d '{"tenant_id":"acme_corp","name":"HubSpot degraded","metric":"error_rate","provider_filter":"hubspot","threshold":20,"window_minutes":15,"comparison":"gt"}'
+
+# Alert when retry queue depth exceeds 50
+curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/alerts \
+  -H "Content-Type: application/json" \
+  -d '{"tenant_id":"acme_corp","name":"Retry queue backing up","metric":"retry_queue_depth","threshold":50}'
+```
+
+Supported metrics: `error_rate`, `failed_count`, `retry_queue_depth`, `dead_letter_count`, `event_volume`
+
+**`DELETE /api/alerts/:id`** — Delete a rule
+
+---
+
 ### Cross-Tool Correlation
 
 Detect patterns across providers. When event A and event B happen within N minutes for the same tenant, generate a correlation alert.
@@ -478,6 +504,7 @@ src/
   forwarding.ts     — Webhook forwarding engine (email, Slack, SMS, voice call, webhook URLs)
   health-scores.ts  — Provider health scoring and scheduled digest engine
   remediation.ts    — Remediation playbook matching engine
+  alerting.ts       — Metric-based alerting rules engine
   correlation.ts    — Cross-tool event correlation engine
   connections.ts    — Connections management page
   dashboard.ts      — HTML dashboard template

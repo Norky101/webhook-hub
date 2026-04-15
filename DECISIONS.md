@@ -176,7 +176,24 @@ This is the path from "webhook monitoring tool" to "business operations automati
 **Chose:** Added Stripe (revenue events), Datadog (infrastructure monitoring), GitHub (development lifecycle) — bringing total to 11
 **Why:** These three fill the most important gaps. Stripe is the #1 webhook integration for any SaaS — payment.failed, subscription.cancelled, invoice.paid are the events that directly map to revenue. Datadog covers infrastructure alerting (monitor triggered/recovered). GitHub covers the development pipeline (PR merged, deploy succeeded/failed). Together with the original 8, the platform now covers CRM, e-commerce, project management, support, HR, engineering, finance, and development. Each took ~10 minutes — the framework pattern continues to prove itself.
 
-### 23. Event detail modal: inspect, understand, act
+### 23. Alerting rules engine: the platform watches so you don't have to
+
+**Considered:** Dashboard-only monitoring (pull), event-triggered alerts only (reactive), or threshold-based alerting (proactive)
+**Chose:** Metric-based alerting rules evaluated on cron, with cooldown to prevent alert fatigue
+**Why:** Forwarding rules react to individual events. Correlation rules detect cross-tool patterns. Alerting rules detect trends — "error rate has been climbing for 15 minutes." This is the intelligence layer. An ops person sets thresholds once and the platform watches continuously.
+
+**Supported metrics:**
+- `error_rate` — % of failed events for a provider over a time window
+- `failed_count` — absolute count of failures
+- `retry_queue_depth` — how backed up is the retry queue
+- `dead_letter_count` — how many events have been permanently abandoned
+- `event_volume` — total events (spike/drop detection)
+
+**Cooldown:** After an alert fires, it won't re-trigger for the same rule until the window expires. This prevents "alert every minute" fatigue while the team is already working the issue.
+
+**Evaluated every 5 minutes** on the existing cron trigger. Alert events are stored in the events table (visible on dashboard) and forwarded through all channels (Slack, email, SMS, voice call).
+
+### 24. Event detail modal: inspect, understand, act
 
 **Considered:** Separate event detail page, inline expand, or modal overlay
 **Chose:** Modal overlay — click any event row to see full detail without leaving the dashboard
