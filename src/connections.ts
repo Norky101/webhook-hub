@@ -63,6 +63,13 @@ export function connectionsHTML(): string {
     td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #161b22; }
     tr:hover td { background: #161b22; }
     .empty { color: #484f58; font-style: italic; padding: 20px; text-align: center; }
+    @media (max-width: 768px) {
+      body { padding: 12px; }
+      .header { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .channel-grid { grid-template-columns: 1fr; }
+      table { display: block; overflow-x: auto; white-space: nowrap; }
+      th, td { padding: 6px 8px; font-size: 12px; }
+    }
     .delete-btn {
       background: #3d1418; color: #f85149; border: 1px solid #f85149;
       padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;

@@ -176,6 +176,13 @@ Claude Code (CLI) — Claude Opus, max effort. (Upgraded to the $100 subscriptio
 - Supports per-provider filtering and comparison operators (gt, lt, gte, lte)
 - **Commit:** `Phase 21: alerting rules engine`
 
+### Session 21 — Mobile Responsive (20:10–20:20)
+- Added media queries to dashboard and connections page
+- Cards stack to 2-column on tablet, tables scroll horizontally on mobile
+- Controls and filters wrap properly on small screens
+- Modal padded for mobile, smaller fonts and spacing
+- **Commit:** `Phase 22: mobile responsive dashboard + connections`
+
 ---
 
 ## Process Notes

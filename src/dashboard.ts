@@ -106,9 +106,30 @@ export function dashboardHTML(): string {
     .refresh-note { font-size: 11px; color: #484f58; }
     .colors { display: flex; gap: 4px; }
     .colors span { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      body { padding: 12px; }
+      .header { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .card .value { font-size: 24px; }
+      .card .label { font-size: 11px; }
+      .card { padding: 12px; }
+      .controls { flex-wrap: wrap; }
+      .filters { flex-wrap: wrap; }
+      table { display: block; overflow-x: auto; white-space: nowrap; }
+      th, td { padding: 6px 8px; font-size: 12px; }
+      .bar-label { width: 60px; font-size: 11px; }
+      .section h2 { font-size: 13px; }
+    }
+    @media (max-width: 480px) {
+      .grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+      .card .value { font-size: 20px; }
+      .controls { gap: 6px; }
+      .controls input, .controls select, .controls button { font-size: 12px; padding: 6px 10px; }
+    }
     .modal-overlay {
       display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; padding: 24px;
+      background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; padding: 12px;
     }
     .modal-overlay.open { display: flex; }
     .modal {
