@@ -209,6 +209,9 @@ export function dashboardHTML(): string {
     </select>
     <button onclick="simulateWebhook()" id="sim-btn" style="background:#8957e5;">Simulate Webhook</button>
     <span id="sim-status" style="font-size:12px; color:#8b949e;"></span>
+    <span style="flex:1;"></span>
+    <button onclick="runAIAnalysis()" id="ai-btn" style="background:#8957e5; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:13px;">Analyze Events with AI</button>
+    <span id="ai-status" style="font-size:12px; color:#8b949e;"></span>
   </div>
 
   <div id="ai-panel" style="display:none; background:#161b22; border:1px solid #30363d; border-radius:8px; padding:16px; margin-bottom:20px;">
@@ -218,11 +221,6 @@ export function dashboardHTML(): string {
     </div>
     <div id="ai-summary" style="font-size:13px; line-height:1.6; margin-bottom:12px;"></div>
     <div id="ai-details"></div>
-  </div>
-
-  <div style="margin-bottom:20px;">
-    <button onclick="runAIAnalysis()" id="ai-btn" style="background:#8957e5; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:13px;">Analyze Events with AI</button>
-    <span id="ai-status" style="font-size:12px; color:#8b949e; margin-left:8px;"></span>
   </div>
 
   <div class="grid">
