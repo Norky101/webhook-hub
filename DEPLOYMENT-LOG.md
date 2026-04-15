@@ -183,6 +183,14 @@ Claude Code (CLI) — Claude Opus, max effort. (Upgraded to the $100 subscriptio
 - Modal padded for mobile, smaller fonts and spacing
 - **Commit:** `Phase 22: mobile responsive dashboard + connections`
 
+### Session 22 — Dashboard Polish: Loading States + Error Handling (20:20–20:35)
+- Blue loading bar at top of page during data fetch
+- Card values pulse while loading
+- "Updated 8:35:00 PM" timestamp in header so user knows data is fresh
+- Error banner with red styling on API failure
+- Loading bar progresses: 30% → 70% → 100% → hidden
+- **Commit:** `Phase 23: dashboard polish — loading bar, timestamps, error states`
+
 ---
 
 ## Process Notes

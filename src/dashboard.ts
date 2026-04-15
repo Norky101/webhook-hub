@@ -103,6 +103,12 @@ export function dashboardHTML(): string {
     .badge.retrying { background: #3d2e00; color: #d29922; }
     .badge.dead_letter { background: #2d1b35; color: #bc8cff; }
     .empty { color: #484f58; font-style: italic; padding: 20px; text-align: center; }
+    .loading-bar {
+      position: fixed; top: 0; left: 0; height: 3px; background: #58a6ff;
+      z-index: 200; transition: width 0.3s; border-radius: 0 2px 2px 0;
+    }
+    @keyframes pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+    .loading .card .value { animation: pulse 1.5s infinite; }
     .refresh-note { font-size: 11px; color: #484f58; }
     .colors { display: flex; gap: 4px; }
     .colors span { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }
@@ -164,6 +170,7 @@ export function dashboardHTML(): string {
   </style>
 </head>
 <body>
+  <div class="loading-bar" id="loading-bar" style="width:0%"></div>
   <div class="header">
     <div style="display:flex;align-items:center;gap:16px;">
       <h1>Webhook Hub</h1>
@@ -172,7 +179,7 @@ export function dashboardHTML(): string {
     <div class="status">
       <div class="dot" id="status-dot"></div>
       <span id="status-text">Connecting...</span>
-      <span class="refresh-note">Auto-refresh 30s</span>
+      <span class="refresh-note">Auto-refresh 30s | <span id="last-updated">—</span></span>
     </div>
   </div>
 
@@ -412,6 +419,9 @@ async function loadDashboard() {
 
   const banner = document.getElementById('error-banner');
   banner.style.display = 'none';
+  const loadingBar = document.getElementById('loading-bar');
+  loadingBar.style.width = '30%';
+  document.body.classList.add('loading');
 
   try {
     // Build filtered events URL
@@ -429,6 +439,8 @@ async function loadDashboard() {
       api(eventsUrl),
       api('/api/events?tenant_id=' + tenant + '&status=failed&limit=10'),
     ]);
+
+    loadingBar.style.width = '70%';
 
     // Status indicator
     const dot = document.getElementById('status-dot');
@@ -543,11 +555,18 @@ async function loadDashboard() {
       ).join('');
     }
 
+    loadingBar.style.width = '100%';
+    setTimeout(function() { loadingBar.style.width = '0%'; }, 500);
+    document.body.classList.remove('loading');
+    document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
   } catch (err) {
     banner.textContent = 'Error loading dashboard: ' + err.message;
     banner.style.display = 'block';
     document.getElementById('status-dot').className = 'dot red';
     document.getElementById('status-text').textContent = 'Error';
+    loadingBar.style.width = '0%';
+    document.body.classList.remove('loading');
   }
 
   // Schedule next refresh
