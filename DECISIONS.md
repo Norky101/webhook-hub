@@ -330,7 +330,13 @@ Actions:
 **Chose:** Custom inline SVG — a central hub with 6 colored nodes connected by lines
 **Why:** An image file needs hosting, caching, and loading. An inline SVG renders instantly, scales to any size, and lives in the HTML — zero external requests. The hub-and-nodes design visually communicates the platform's purpose: many providers connected to one central point. Each node uses a real provider brand color. The same SVG serves as the favicon (browser tab icon) using a data URI. Logo is clickable on every page and links back to the dashboard — consistent navigation pattern.
 
-## 39. End-to-end testing against the live URL
+## 39. Request a Provider: show extensibility without building a custom engine
+
+**Considered:** Full custom provider builder (user configures field mappings in the UI), or a simple request form
+**Chose:** Request button with prompt — user types a provider name, gets a confirmation with 24-48hr timeline
+**Why:** A custom provider engine is a week of work. A request button takes 10 minutes and shows the same product thinking: "we know users will want providers we haven't built yet, and we have a path for that." The message mentions "our normalizer framework" — signaling that adding providers is fast and systematized, not ad hoc. The providers section on the connections page also shows all 11 active providers as color-coded badges, reinforcing the framework's scale.
+
+## 40. End-to-end testing against the live URL
 
 **Considered:** Unit tests only (mock D1), integration tests with Miniflare, or full end-to-end tests against the deployed production URL
 **Chose:** Both — 18 unit tests with mock D1 for fast iteration, plus 22 end-to-end tests curled against the live Cloudflare Worker
