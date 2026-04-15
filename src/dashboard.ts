@@ -175,6 +175,7 @@ export function dashboardHTML(): string {
     <div style="display:flex;align-items:center;gap:16px;">
       <h1>Webhook Hub</h1>
       <a href="/connections" style="font-size:13px;color:#58a6ff;text-decoration:none;">Connections</a>
+      <a href="/account" style="font-size:13px;color:#58a6ff;text-decoration:none;">Account</a>
     </div>
     <div class="status">
       <div class="dot" id="status-dot"></div>
@@ -500,7 +501,7 @@ async function loadDashboard() {
           const color = p.status === 'healthy' ? '#3fb950' : p.status === 'degraded' ? '#d29922' : p.status === 'critical' ? '#f85149' : '#484f58';
           const bg = p.status === 'healthy' ? '#0d3321' : p.status === 'degraded' ? '#3d2e00' : p.status === 'critical' ? '#3d1418' : '#161b22';
           const provColor = PROVIDER_COLORS[p.provider] || '#8b949e';
-          return '<div style="background:' + bg + ';border:1px solid ' + color + ';border-radius:8px;padding:14px 18px;min-width:140px;">'
+          return '<div data-health-provider="' + p.provider + '" style="background:' + bg + ';border:1px solid ' + color + ';border-radius:8px;padding:14px 18px;min-width:140px;cursor:pointer;" title="Click to filter events by ' + p.provider + '">'
             + '<div style="font-size:12px;color:' + provColor + ';font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">' + p.provider + '</div>'
             + '<div style="font-size:28px;font-weight:700;color:' + color + ';margin:4px 0;">' + p.success_rate + '%</div>'
             + '<div style="font-size:11px;color:#8b949e;">' + p.processed + ' ok / ' + p.failed + ' failed</div>'
@@ -829,6 +830,13 @@ document.addEventListener('click', function(e) {
   if (row) openEventModal(row.getAttribute('data-event-id'));
   var replayBtn = e.target.closest('[data-replay-id]');
   if (replayBtn) replayEvent(replayBtn.getAttribute('data-replay-id'));
+  var healthCard = e.target.closest('[data-health-provider]');
+  if (healthCard) {
+    var prov = healthCard.getAttribute('data-health-provider');
+    document.getElementById('filter-provider').value = prov;
+    applyFilters();
+    document.getElementById('section-events').scrollIntoView({ behavior: 'smooth' });
+  }
 });
 
 async function runAIAnalysis() {

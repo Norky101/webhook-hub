@@ -294,7 +294,19 @@ Actions:
 **Chose:** Inline create forms directly on the connections page for correlation rules, playbooks, and forwarding rules
 **Why:** If configuring the platform requires opening a terminal and writing curl commands, it's a developer tool. If it's point-and-click in the UI, it's a product. Ops teams shouldn't need to know HTTP methods to set up a correlation rule. The forms are simple — fill in fields, click "Add Rule" — and the page refreshes immediately showing the new rule with a delete button and toggle switch. Combined with the forwarding section on the dashboard and the toggle switches, the entire platform is now configurable without touching a terminal.
 
-## 33. End-to-end testing against the live URL
+## 33. Clickable health cards: data should be interactive, not static
+
+**Considered:** Health scores as read-only cards, or interactive elements that navigate to filtered views
+**Chose:** Click any health card → events table filters to that provider and scrolls into view
+**Why:** An ops person sees "INTERCOM 88.9% degraded" and their next thought is "show me the Intercom events." Making them manually find the filter dropdown and select Intercom is friction. Click the card, see the events. Data should lead to action in one click.
+
+## 34. Account page: show the product has a business model
+
+**Considered:** No account page (it's a demo), or a page showing what a real user would see
+**Chose:** Account page with profile, subscription details, real usage stats, and tier comparison
+**Why:** This shows the platform is a product, not a project. The tier comparison (Free/Pro/Business/Enterprise) shows Aaron the monetization strategy. The usage stats pull real data from the API — actual event count, active providers, forwarding channels. Even though auth isn't built, the account page demonstrates what the user experience would look like for a paying customer.
+
+## 35. End-to-end testing against the live URL
 
 **Considered:** Unit tests only (mock D1), integration tests with Miniflare, or full end-to-end tests against the deployed production URL
 **Chose:** Both — 18 unit tests with mock D1 for fast iteration, plus 22 end-to-end tests curled against the live Cloudflare Worker

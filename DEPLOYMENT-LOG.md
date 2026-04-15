@@ -237,6 +237,15 @@ Claude Code (CLI) — Claude Opus, max effort. (Upgraded to the $100 subscriptio
 - Toggle switches on forwarding rules (on/off)
 - **Commits:** `Phase 29b` + `Phase 29c` + `Phase 30`
 
+### Session 29 — Clickable Health Cards + Account Page (23:40–23:50)
+- Health score cards are clickable — click a provider to filter events table to that provider
+- Smooth scroll to events section after filtering
+- Account page at /account: profile, subscription (Pro plan), usage stats, tier comparison
+- Usage pulls real data: event count, provider count, active channels
+- Tier cards: Free, Pro (current), Business, Enterprise with feature lists
+- Nav links (Dashboard, Connections, Account) on all three pages
+- **Commit:** `Phase 31: clickable health cards + account page`
+
 ---
 
 ## Process Notes

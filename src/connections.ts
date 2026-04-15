@@ -95,6 +95,7 @@ export function connectionsHTML(): string {
     <div class="nav">
       <a href="/dashboard">Dashboard</a>
       <a href="/connections">Connections</a>
+      <a href="/account">Account</a>
     </div>
   </div>
 

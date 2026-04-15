@@ -6,6 +6,7 @@ import { processRetryQueue, queueForRetry } from "./retry";
 import { forwardEvent } from "./forwarding";
 import { dashboardHTML } from "./dashboard";
 import { connectionsHTML } from "./connections";
+import { accountHTML } from "./account";
 import { getProviderHealthScores, sendHealthDigest } from "./health-scores";
 import { checkCorrelations } from "./correlation";
 import { evaluateAlertRules } from "./alerting";
@@ -63,6 +64,10 @@ app.get("/dashboard", (c) => {
 
 app.get("/connections", (c) => {
   return c.html(connectionsHTML());
+});
+
+app.get("/account", (c) => {
+  return c.html(accountHTML());
 });
 
 // ─── Webhook Receiver ───────────────────────────────────
