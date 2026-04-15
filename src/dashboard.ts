@@ -225,19 +225,19 @@ export function dashboardHTML(): string {
   </div>
 
   <div class="grid">
-    <div class="card">
+    <div class="card" title="Total webhook events received and stored for this tenant">
       <div class="label">Total Events</div>
       <div class="value blue" id="total-events">—</div>
     </div>
-    <div class="card">
+    <div class="card" title="Number of events that failed processing in the last hour. High numbers may indicate a provider issue or payload changes.">
       <div class="label">Error Rate (1h)</div>
       <div class="value" id="error-rate">—</div>
     </div>
-    <div class="card">
+    <div class="card" title="Events that failed and are waiting to be retried. The system retries with exponential backoff: 1min, 5min, 30min, 2hr, 12hr.">
       <div class="label">Retry Queue</div>
       <div class="value" id="retry-depth">—</div>
     </div>
-    <div class="card">
+    <div class="card" title="Events that failed all 5 retry attempts. These need manual investigation — check the raw payload and provider status.">
       <div class="label">Dead Letters</div>
       <div class="value" id="dead-letters">—</div>
     </div>
