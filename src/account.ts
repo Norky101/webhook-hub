@@ -134,7 +134,7 @@ export function accountHTML(): string {
   </div>
 
   <div class="section">
-    <h2>Plans</h2>
+    <h2 id="plans">Plans</h2>
     <div class="tier-grid">
       <div class="tier-card">
         <div class="tier-name">Free</div>

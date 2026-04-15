@@ -176,6 +176,7 @@ export function dashboardHTML(): string {
       <h1>Webhook Hub</h1>
       <a href="/connections" style="font-size:13px;color:#58a6ff;text-decoration:none;">Connections</a>
       <a href="/account" style="font-size:13px;color:#58a6ff;text-decoration:none;">Account</a>
+      <a href="/account#plans" style="font-size:12px;color:white;background:#238636;padding:4px 12px;border-radius:12px;text-decoration:none;font-weight:600;">Upgrade</a>
     </div>
     <div class="status">
       <div class="dot" id="status-dot"></div>
