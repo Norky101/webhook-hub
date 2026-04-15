@@ -159,7 +159,7 @@ export function connectionsHTML(): string {
           <span class="channel-name" style="color:#d2a8ff;">Agent Actions</span>
           <button onclick="copyToClipboard(BASE+'/api/agent/action')" style="background:#30363d;color:#e1e4e8;border:1px solid #484f58;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">Copy URL</button>
         </div>
-        <div class="channel-status">6 actions: replay, forwarding, playbooks, automations, alerts, toggle</div>
+        <div class="channel-status">POST — 6 actions: replay, forwarding, playbooks, automations, alerts, toggle</div>
         <div class="channel-dest" id="action-url"></div>
       </div>
       <div class="channel-card active" style="border-color:#d2a8ff;">
@@ -167,7 +167,7 @@ export function connectionsHTML(): string {
           <span class="channel-name" style="color:#d2a8ff;">AI Analysis</span>
           <button onclick="copyToClipboard(BASE+'/api/analyze?tenant_id='+document.getElementById('tenant-input').value)" style="background:#30363d;color:#e1e4e8;border:1px solid #484f58;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;">Copy URL</button>
         </div>
-        <div class="channel-status">Claude-powered or structured event analysis</div>
+        <div class="channel-status">POST — Claude-powered or structured event analysis</div>
         <div class="channel-dest" id="analyze-url"></div>
       </div>
     </div>
