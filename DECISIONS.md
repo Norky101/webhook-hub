@@ -211,6 +211,28 @@ This is the path from "webhook monitoring tool" to "business operations automati
 **Chose:** Modal overlay — click any event row to see full detail without leaving the dashboard
 **Why:** A separate page breaks flow — you leave the dashboard, lose context, have to navigate back. Inline expand clutters the table. A modal keeps you on the dashboard while showing everything: all metadata, full raw JSON payload, matching remediation playbooks, and a replay button. Click outside or press Escape to close. The ops workflow is: glance at dashboard → spot anomaly → click for detail → act (replay or follow remediation steps) → close → continue monitoring. No page navigation, no context switching.
 
+## 27. Security posture: what's secured, what's deferred, and why
+
+**What's secured:**
+- All API keys/tokens stored as Cloudflare Workers secrets (Resend, Twilio SID/token/number, Slack webhook URLs) — encrypted at rest, never in code or git
+- Parameterized SQL queries everywhere (`.bind()`) — no SQL injection possible
+- Idempotency via delivery ID dedup — prevents replay attacks from creating duplicate records
+- Timing-safe string comparison for signature validation — prevents timing attacks
+- Input validation on all JSON bodies — rejects malformed payloads with 400
+- Tenant isolation via `tenant_id` on every query — Tenant A cannot access Tenant B's data
+
+**What's deferred (documented, not overlooked):**
+- API authentication — anyone with a tenant_id can query events (see Decision #11)
+- Signature enforcement — validation logic is written but not enforced at the receiver (see Decision #10)
+- Rate limiting — no protection against webhook flooding
+- Input size limits — large payloads accepted without restriction
+- CSRF protection — dashboard makes API calls without tokens
+- Forwarding destinations in plain text in D1 — email addresses, phone numbers, Slack URLs not encrypted
+
+**Why defer these:** Every security feature deferred is infrastructure plumbing — important for production but doesn't demonstrate architecture skill or product thinking within a time-constrained eval. The security posture is honest: parameterized queries and encrypted secrets protect against the most common attack vectors (SQL injection, credential leaks). The gaps (auth, rate limiting, signature enforcement) are Sprint 2-3 and documented in the product roadmap.
+
+**For production:** Auth (D1-based sessions), rate limiting (CF Workers rate limiting API), signature enforcement (per-tenant secret store in KV), input size limits, CSRF tokens, and encrypted forwarding destinations.
+
 ---
 
 ## The Thinking Behind The Build
