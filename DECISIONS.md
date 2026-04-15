@@ -162,6 +162,20 @@ ee first, infrastructure second. A dashboard with search and export is more impr
 
 This is the path from "webhook monitoring tool" to "business operations automation platform."
 
+### 21. Connections page: one place to manage everything
+
+**Considered:** Managing forwarding rules, correlation rules, and playbooks all from the dashboard, or a separate dedicated page
+**Chose:** Dedicated `/connections` page linked from the dashboard header
+**Why:** The dashboard is for monitoring — glancing at health, events, failures. Managing integrations is a different task: adding Slack channels, setting up correlation rules, configuring playbooks. Mixing both on one page creates clutter. A separate page means the dashboard stays clean for ops, and connections is where you go to configure. Both link to each other.
+
+**What it shows:** Every forwarding channel (email, Slack, SMS, voice call, webhook URL) as a card with active/inactive status, severity filter, and rule name (not raw URLs — human-readable labels like "Slack alerts #webhook-alerts"). Plus the health digest Slack channel (configured via Worker secret, shown as a system channel). Below that: correlation rules and remediation playbooks with delete buttons.
+
+### 22. 11 providers: Stripe, Datadog, GitHub complete the coverage
+
+**Considered:** Stopping at 8 (already proved the framework), or pushing to double digits
+**Chose:** Added Stripe (revenue events), Datadog (infrastructure monitoring), GitHub (development lifecycle) — bringing total to 11
+**Why:** These three fill the most important gaps. Stripe is the #1 webhook integration for any SaaS — payment.failed, subscription.cancelled, invoice.paid are the events that directly map to revenue. Datadog covers infrastructure alerting (monitor triggered/recovered). GitHub covers the development pipeline (PR merged, deploy succeeded/failed). Together with the original 8, the platform now covers CRM, e-commerce, project management, support, HR, engineering, finance, and development. Each took ~10 minutes — the framework pattern continues to prove itself.
+
 ---
 
 ## The Thinking Behind The Build
@@ -205,11 +219,11 @@ This project was built entirely using Claude Code as the primary development too
 - Rate limiting per tenant
 - Auth + login UI (D1-based)
 - Alerting rules engine — "notify when error rate > X"
-- Cross-tool event correlation
-- More providers (BambooHR, DocuSign, Notion, Datadog, Mailchimp)
+- More providers (BambooHR, DocuSign, Notion, Mailchimp)
 
 **Production:**
-- Stripe billing (tiered pricing)
+- Stripe billing (tiered pricing: Free/Pro/Business/Enterprise)
+- Automated remediation actions — "when event X happens, call API Y"
 - Durable Objects for real-time state
 - CF Queues for retry instead of cron
 - Multi-region D1 read replicas
