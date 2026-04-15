@@ -144,9 +144,9 @@ async function loadConnections() {
 
     // Show all channel types (even unconfigured ones)
     const allTypes = ['email', 'slack', 'sms', 'call', 'webhook'];
-    channels.innerHTML = allTypes.map(type => {
+    let cardsHTML = allTypes.map(type => {
       const active = byType[type] && byType[type].length > 0;
-      const destinations = active ? byType[type].map(r => r.destination).join(', ') : 'Not configured';
+      const names = active ? byType[type].map(r => r.name || r.destination).join(', ') : 'Not configured';
       const severity = active ? (byType[type][0].severity_filter || 'all') : '—';
       return '<div class="channel-card ' + (active ? 'active' : '') + '">'
         + '<div class="channel-header">'
@@ -154,9 +154,21 @@ async function loadConnections() {
         + '<span class="badge ' + (active ? 'on' : 'off') + '">' + (active ? 'Active' : 'Off') + '</span>'
         + '</div>'
         + '<div class="channel-status">Severity: ' + severity + ' | Rules: ' + (active ? byType[type].length : 0) + '</div>'
-        + '<div class="channel-dest">' + esc(destinations) + '</div>'
+        + '<div class="channel-dest">' + esc(names) + '</div>'
         + '</div>';
     }).join('');
+
+    // Add health digest Slack card (configured via Worker secret, not forwarding rules)
+    cardsHTML += '<div class="channel-card active">'
+      + '<div class="channel-header">'
+      + '<span class="channel-name">\\u{1F4CA} Slack Health Digest</span>'
+      + '<span class="badge on">Active</span>'
+      + '</div>'
+      + '<div class="channel-status">Schedule: every 20 minutes | Via: cron trigger</div>'
+      + '<div class="channel-dest">#provider-health-stats</div>'
+      + '</div>';
+
+    channels.innerHTML = cardsHTML;
   } catch (e) { /* ignore */ }
 
   // Load correlation rules
