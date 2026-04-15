@@ -326,6 +326,26 @@ Actions:
 
 ---
 
+## Building for Users, Not for the Spec
+
+The spec asked for a webhook receiver with 5 providers, a dashboard, retry engine, and 15 tests. Every feature beyond that came from asking one question: **"If I were actually using this platform, what would I need next?"**
+
+The webhook simulator came from "how does someone demo this without real provider accounts?" The forwarding engine came from "nobody watches a dashboard all day — events need to go where people are." The correlation engine came from "the real value is patterns across tools, not events in isolation." The automation workflows came from "alerting isn't enough — the system should act." The AI analysis came from "humans can't spot patterns across 100 events from 11 providers."
+
+Every decision was filtered through: **"What would an ops person at 3am actually need?"**
+
+- Auto-loading dashboard — no blank screens, no confusion
+- Toggle switches — pause a rule during maintenance without losing its config
+- Remediation playbooks in every notification — don't just wake someone up, tell them what to do
+- Channel escalation (info=email, critical=phone call) — match urgency to delivery method
+- Health digest every 20 minutes — proactive, not reactive
+- Inline create forms — no terminal required to configure the platform
+- Event detail modal — click to inspect without leaving the dashboard
+
+This isn't a coding test. It's a product thinking test. The code is the vehicle. The decisions are the signal.
+
+---
+
 ## The Thinking Behind The Build
 
 Before writing code, I researched who would be evaluating this. Aaron Hall is the founding partner of SprintMode — an AI-native company-building platform with the tagline "Built for execution. Zero to liquidity." SprintMode operates across four engines (Studios, Labs, Foundry, Capital) and the common thread is velocity: ship fast, ship live, iterate in market. Aaron is a serial startup founder (500 Global alum, TechCrunch-covered, INC 50), deeply invested in AI-assisted development.
