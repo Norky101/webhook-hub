@@ -457,6 +457,7 @@ Open in a browser: `https://webhook-hub.noahpilkington98.workers.dev/dashboard?t
 - Event search — filter by keyword, provider, severity, or status
 - CSV/JSON export buttons
 - Built-in webhook simulator
+- Click any event row → detail modal with full JSON payload, remediation, replay
 - Auto-refreshes every 30 seconds
 
 **`GET /connections`** — Connections management page

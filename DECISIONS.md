@@ -176,6 +176,12 @@ This is the path from "webhook monitoring tool" to "business operations automati
 **Chose:** Added Stripe (revenue events), Datadog (infrastructure monitoring), GitHub (development lifecycle) — bringing total to 11
 **Why:** These three fill the most important gaps. Stripe is the #1 webhook integration for any SaaS — payment.failed, subscription.cancelled, invoice.paid are the events that directly map to revenue. Datadog covers infrastructure alerting (monitor triggered/recovered). GitHub covers the development pipeline (PR merged, deploy succeeded/failed). Together with the original 8, the platform now covers CRM, e-commerce, project management, support, HR, engineering, finance, and development. Each took ~10 minutes — the framework pattern continues to prove itself.
 
+### 23. Event detail modal: inspect, understand, act
+
+**Considered:** Separate event detail page, inline expand, or modal overlay
+**Chose:** Modal overlay — click any event row to see full detail without leaving the dashboard
+**Why:** A separate page breaks flow — you leave the dashboard, lose context, have to navigate back. Inline expand clutters the table. A modal keeps you on the dashboard while showing everything: all metadata, full raw JSON payload, matching remediation playbooks, and a replay button. Click outside or press Escape to close. The ops workflow is: glance at dashboard → spot anomaly → click for detail → act (replay or follow remediation steps) → close → continue monitoring. No page navigation, no context switching.
+
 ---
 
 ## The Thinking Behind The Build
