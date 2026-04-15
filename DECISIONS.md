@@ -275,7 +275,20 @@ Actions:
 **Chose:** Clickable toggle switches on each forwarding rule in the connections page
 **Why:** Deleting a rule loses the configuration — the destination URL, the severity filter, the rule name. If an ops person wants to temporarily silence Slack during a maintenance window, they shouldn't have to reconfigure it from scratch afterward. A toggle preserves the rule but stops it from firing. This is the same pattern PagerDuty, Datadog, and every mature alerting tool uses. The `active` field was already in the schema — the toggle just exposes it in the UI.
 
-## 31. End-to-end testing against the live URL
+## 31. AI Agent API layer: agents don't just read, they resolve
+
+**Considered:** Human-only API, chatbot interface, or a machine-readable API layer for AI agents
+**Chose:** OpenAPI spec + agent feed endpoint + agent action endpoint — any AI framework can connect and act
+**Why:** The end state isn't a human staring at a dashboard. It's an AI agent that listens for events, analyzes patterns, and takes corrective action autonomously. A Stripe payment fails → the agent sees it in the feed → creates a support ticket → notifies the account manager → all without a human touching the dashboard.
+
+**Three endpoints:**
+- `GET /api/openapi.json` — machine-readable API spec. Any agent framework (OpenClaw, LangChain, CrewAI, GPT Actions) can auto-discover what the platform does.
+- `GET /api/agent/feed?tenant_id=X` — events formatted for agent consumption. Each event includes `suggested_actions` (what the agent should consider doing) and `available_actions` (what the API supports).
+- `POST /api/agent/action` — execute an action. Agents can create forwarding rules, set up automations, create playbooks, toggle rules, create alert thresholds — everything a human can do from the dashboard.
+
+**Why this matters:** This is the bridge between Level 3 (automation platform) and Level 4 (AI-native). The platform provides the data and the action API. The AI agent provides the intelligence and judgment. Humans set the guardrails (alert rules, severity thresholds), agents handle the execution.
+
+## 32. End-to-end testing against the live URL
 
 **Considered:** Unit tests only (mock D1), integration tests with Miniflare, or full end-to-end tests against the deployed production URL
 **Chose:** Both — 18 unit tests with mock D1 for fast iteration, plus 22 end-to-end tests curled against the live Cloudflare Worker

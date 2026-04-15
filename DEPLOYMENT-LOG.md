@@ -221,6 +221,13 @@ Claude Code (CLI) — Claude Opus, max effort. (Upgraded to the $100 subscriptio
 - Card status updates based on whether any rules are active
 - **Commit:** `Phase 28: clickable toggle switches on connections page`
 
+### Session 27 — AI Agent API Layer (23:15–23:40)
+- OpenAPI spec at GET /api/openapi.json — any agent framework can discover the API
+- Agent feed: GET /api/agent/feed — events with suggested_actions and available_actions
+- Agent action: POST /api/agent/action — agents can create rules, automations, playbooks
+- 6 agent actions: replay, forwarding rules, playbooks, automations, alerts, toggle rules
+- **Commit:** `Phase 29: AI agent API layer`
+
 ---
 
 ## Process Notes

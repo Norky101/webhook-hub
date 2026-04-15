@@ -10,6 +10,7 @@ import { getProviderHealthScores, sendHealthDigest } from "./health-scores";
 import { checkCorrelations } from "./correlation";
 import { evaluateAlertRules } from "./alerting";
 import { analyzeEvents } from "./ai-analysis";
+import { getAgentFeed, executeAgentAction, getOpenAPISpec } from "./agent-api";
 import { executeAutomations } from "./automation";
 import { generateWebhook, simulatorProviders } from "./simulator";
 
@@ -506,6 +507,35 @@ app.delete("/api/playbooks/:id", async (c) => {
   const { id } = c.req.param();
   await c.env.DB.prepare("DELETE FROM remediation_playbooks WHERE id = ?").bind(id).run();
   return c.json({ status: "deleted" });
+});
+
+// ─── Agent API ──────────────────────────────────────────
+
+app.get("/api/openapi.json", (c) => {
+  return c.json(getOpenAPISpec());
+});
+
+app.get("/api/agent/feed", async (c) => {
+  const tenant_id = c.req.query("tenant_id");
+  if (!tenant_id) return c.json({ error: "tenant_id is required" }, 400);
+  const limit = parseInt(c.req.query("limit") || "20");
+  const feed = await getAgentFeed(c.env.DB, tenant_id, limit);
+  return c.json({ tenant_id, count: feed.length, events: feed });
+});
+
+app.post("/api/agent/action", async (c) => {
+  const body = await c.req.json<{
+    tenant_id: string;
+    action: string;
+    params: Record<string, unknown>;
+  }>();
+
+  if (!body.tenant_id || !body.action) {
+    return c.json({ error: "tenant_id and action are required" }, 400);
+  }
+
+  const result = await executeAgentAction(c.env.DB, body.tenant_id, body.action, body.params || {});
+  return c.json(result);
 });
 
 // ─── AI Analysis ────────────────────────────────────────

@@ -386,6 +386,33 @@ curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/forwarding/tes
 
 ---
 
+### AI Agent API
+
+Machine-readable API for AI agents (OpenClaw, LangChain, CrewAI, GPT Actions). Agents can discover the API, read events with suggested actions, and take corrective action.
+
+**`GET /api/openapi.json`** — OpenAPI spec for agent discovery
+
+**`GET /api/agent/feed?tenant_id=X`** — Events with suggested actions
+
+```bash
+curl "https://webhook-hub.noahpilkington98.workers.dev/api/agent/feed?tenant_id=demo_tenant&limit=5"
+```
+
+Each event includes `suggested_actions` and `available_actions` the agent can execute.
+
+**`POST /api/agent/action`** — Execute an action
+
+```bash
+# Agent creates an alert rule
+curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/agent/action \
+  -H "Content-Type: application/json" \
+  -d '{"tenant_id":"demo_tenant","action":"create_alert_rule","params":{"name":"Agent: high error rate","metric":"error_rate","threshold":25,"window_minutes":10}}'
+```
+
+Available actions: `replay_event`, `create_forwarding_rule`, `create_playbook`, `create_automation`, `create_alert_rule`, `toggle_forwarding_rule`
+
+---
+
 ### AI Event Analysis
 
 Click "Analyze Events with AI" on the dashboard, or call the API directly.
@@ -548,6 +575,7 @@ src/
   forwarding.ts     — Webhook forwarding engine (email, Slack, SMS, voice call, webhook URLs)
   health-scores.ts  — Provider health scoring and scheduled digest engine
   remediation.ts    — Remediation playbook matching engine
+  agent-api.ts      — AI agent API layer (OpenAPI, feed, actions)
   ai-analysis.ts    — AI event analysis (Claude + structured fallback)
   automation.ts     — Automation workflow engine (action chains)
   alerting.ts       — Metric-based alerting rules engine
