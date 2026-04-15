@@ -312,7 +312,19 @@ Actions:
 **Chose:** 10 most recent events on the dashboard, with search/filter/export for deeper investigation
 **Why:** The dashboard is a glance, not a database browser. An ops person needs to see "what just happened" — not scroll through 50 rows. 10 events fits on one screen without scrolling. If they need more, the search bar, provider filter, and CSV export cover it. This is the same pattern Datadog and PagerDuty use — recent activity is short, investigation tools are deep.
 
-## 36. End-to-end testing against the live URL
+## 36. Clear filters: every action should be reversible
+
+**Considered:** Only resetting by manually changing each dropdown, or a single "Clear filters" button
+**Chose:** A "Clear filters" button that appears when any filter is active, resets everything in one click
+**Why:** If clicking a health card filters events to one provider, there must be an obvious way back. Hidden state is bad UX — the user shouldn't wonder "why am I only seeing Datadog events?" The button appears only when needed and disappears when filters are clear. Same principle as an "undo" — every action should be reversible without thinking.
+
+## 37. Hover tooltips: teach without cluttering
+
+**Considered:** Inline descriptions under each card, a help page, or hover tooltips
+**Chose:** Native HTML title tooltips on summary cards explaining each metric
+**Why:** The dashboard should be clean — no extra text on screen. But a new user seeing "Dead Letters: 5" shouldn't have to guess what that means. Hover for 1-2 seconds and you get the full explanation. Zero screen clutter, full context on demand. Same pattern as Grafana and Datadog dashboards.
+
+## 38. End-to-end testing against the live URL
 
 **Considered:** Unit tests only (mock D1), integration tests with Miniflare, or full end-to-end tests against the deployed production URL
 **Chose:** Both — 18 unit tests with mock D1 for fast iteration, plus 22 end-to-end tests curled against the live Cloudflare Worker

@@ -246,6 +246,15 @@ Claude Code (CLI) — Claude Opus, max effort. (Upgraded to the $100 subscriptio
 - Nav links (Dashboard, Connections, Account) on all three pages
 - **Commit:** `Phase 31: clickable health cards + account page`
 
+### Session 30 — Dashboard Polish: Colors, Tooltips, Filters, Limits (00:00–00:10)
+- Fixed Zendesk card color (bright teal for readability)
+- Centered provider health cards
+- Limited recent events to 10 for cleaner view
+- Added missing providers to filter dropdown (Stripe, Datadog, GitHub, System)
+- Hover tooltips on summary cards explaining each metric
+- "Clear filters" button appears when any filter is active
+- **Commits:** `Phase 31b` through `Phase 31e` + filter/tooltip fixes
+
 ---
 
 ## Process Notes
