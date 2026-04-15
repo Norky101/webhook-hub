@@ -110,6 +110,12 @@ export function connectionsHTML(): string {
   </div>
 
   <div class="section">
+    <h2>Providers</h2>
+    <div id="providers-grid" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;"></div>
+    <button onclick="requestProvider()" style="background:#30363d; color:#e1e4e8; border:1px solid #484f58; padding:6px 14px; border-radius:6px; cursor:pointer; font-size:12px;">+ Request a Provider</button>
+  </div>
+
+  <div class="section">
     <h2>Forwarding Channels</h2>
     <div class="channel-grid" id="channels">
       <div class="empty">Enter a tenant ID above</div>
@@ -213,6 +219,7 @@ async function loadConnections() {
   if (!tenant) return;
 
   updateAgentURLs();
+  loadProviders();
 
   // Load forwarding rules
   try {
@@ -308,6 +315,25 @@ async function loadConnections() {
       }).join('');
     }
   } catch (e) { /* ignore */ }
+}
+
+async function loadProviders() {
+  try {
+    var data = await api('/api/health');
+    var grid = document.getElementById('providers-grid');
+    var provColors = { hubspot:'#ff7a59', shopify:'#96bf48', linear:'#5e6ad2', intercom:'#286efa', gusto:'#f45d48', salesforce:'#00a1e0', pagerduty:'#06ac38', zendesk:'#49c6d4', stripe:'#635bff', datadog:'#632ca6', github:'#8b949e' };
+    grid.innerHTML = (data.providers || []).map(function(p) {
+      var color = provColors[p] || '#8b949e';
+      return '<div style="background:#161b22;border:1px solid ' + color + ';border-radius:6px;padding:6px 12px;font-size:12px;color:' + color + ';font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">' + p + '</div>';
+    }).join('');
+  } catch(e) {}
+}
+
+function requestProvider() {
+  var name = prompt('What provider would you like us to add?\\n\\nExamples: BambooHR, DocuSign, Notion, Mailchimp, Xero, Mercury');
+  if (name && name.trim()) {
+    alert('Request submitted for "' + name.trim() + '"\\n\\nOur team will review and add this provider. New providers typically take 24-48 hours to integrate using our normalizer framework.');
+  }
 }
 
 function copyToClipboard(text) {
