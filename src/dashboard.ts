@@ -414,7 +414,7 @@ const PROVIDER_COLORS = {
   gusto: '#f45d48',
   salesforce: '#00a1e0',
   pagerduty: '#06ac38',
-  zendesk: '#17494d',
+  zendesk: '#49c6d4',
   stripe: '#635bff',
   datadog: '#632ca6',
   github: '#8b949e',
