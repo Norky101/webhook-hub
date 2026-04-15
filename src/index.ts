@@ -9,6 +9,7 @@ import { connectionsHTML } from "./connections";
 import { getProviderHealthScores, sendHealthDigest } from "./health-scores";
 import { checkCorrelations } from "./correlation";
 import { evaluateAlertRules } from "./alerting";
+import { executeAutomations } from "./automation";
 import { generateWebhook, simulatorProviders } from "./simulator";
 
 /** Env bindings for Cloudflare Workers */
@@ -158,6 +159,7 @@ app.post("/webhooks/:provider/:tenant_id", async (c) => {
         : undefined;
       ctx.waitUntil(forwardEvent(c.env.DB, event, c.env.RESEND_API_KEY, twilioConfig));
       ctx.waitUntil(checkCorrelations(c.env.DB, event, c.env.RESEND_API_KEY, twilioConfig));
+      ctx.waitUntil(executeAutomations(c.env.DB, event));
     }
   } catch {
     // executionCtx not available (test environment) — skip forwarding
@@ -491,6 +493,53 @@ app.post("/api/playbooks", async (c) => {
 app.delete("/api/playbooks/:id", async (c) => {
   const { id } = c.req.param();
   await c.env.DB.prepare("DELETE FROM remediation_playbooks WHERE id = ?").bind(id).run();
+  return c.json({ status: "deleted" });
+});
+
+// ─── Automation Workflows API ────────────────────────────
+
+app.get("/api/automations", async (c) => {
+  const tenant_id = c.req.query("tenant_id");
+  if (!tenant_id) return c.json({ error: "tenant_id is required" }, 400);
+  const result = await c.env.DB.prepare(
+    "SELECT * FROM automation_workflows WHERE tenant_id = ? ORDER BY created_at DESC"
+  ).bind(tenant_id).all();
+  return c.json({ workflows: result.results || [] });
+});
+
+app.post("/api/automations", async (c) => {
+  const body = await c.req.json<{
+    tenant_id: string;
+    name: string;
+    trigger_provider: string;
+    trigger_event_pattern: string;
+    actions: Array<{
+      type: string;
+      name: string;
+      config: Record<string, unknown>;
+    }>;
+  }>();
+
+  if (!body.tenant_id || !body.name || !body.trigger_provider || !body.trigger_event_pattern || !body.actions?.length) {
+    return c.json({ error: "tenant_id, name, trigger_provider, trigger_event_pattern, and actions are required" }, 400);
+  }
+
+  await c.env.DB.prepare(
+    "INSERT INTO automation_workflows (tenant_id, name, trigger_provider, trigger_event_pattern, actions) VALUES (?, ?, ?, ?, ?)"
+  ).bind(
+    body.tenant_id,
+    body.name,
+    body.trigger_provider,
+    body.trigger_event_pattern,
+    JSON.stringify(body.actions)
+  ).run();
+
+  return c.json({ status: "created" }, 201);
+});
+
+app.delete("/api/automations/:id", async (c) => {
+  const { id } = c.req.param();
+  await c.env.DB.prepare("DELETE FROM automation_workflows WHERE id = ?").bind(id).run();
   return c.json({ status: "deleted" });
 });
 

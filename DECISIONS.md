@@ -233,7 +233,33 @@ This is the path from "webhook monitoring tool" to "business operations automati
 
 **For production:** Auth (D1-based sessions), rate limiting (CF Workers rate limiting API), signature enforcement (per-tenant secret store in KV), input size limits, CSRF tokens, and encrypted forwarding destinations.
 
-## 28. End-to-end testing against the live URL
+## 28. Automation workflows: webhooks are the trigger, not the product
+
+**Considered:** Notifications only (alert humans), hard-coded automated responses, or configurable workflow chains
+**Chose:** Configurable automation workflows — "when event X happens, execute actions A → B → C in sequence"
+**Why:** Forwarding tells people something happened. Automation does something about it. The difference between a monitoring tool and an operations platform is whether it can act, not just observe.
+
+**How it works:** Each workflow has a trigger (provider + event pattern) and an ordered list of actions. When an event matches, actions execute in sequence:
+- **webhook** — POST to any API with a templated body (create Zendesk tickets, Linear issues, trigger deploys)
+- **slack** — send a formatted message to a Slack channel
+- **log** — record the action for audit
+
+**Template variables:** Action bodies support `{{provider}}`, `{{event_type}}`, `{{severity}}`, `{{summary}}`, `{{tenant_id}}`, `{{event_id}}`, `{{received_at}}`. This means one workflow template works for any matching event.
+
+**Example workflow:**
+```
+Trigger: stripe / payment.*failed
+Actions:
+  1. POST to Zendesk API → create ticket "Payment failed for {{summary}}"
+  2. Slack #revenue → "Payment failure detected — ticket created"
+  3. Log → audit trail
+```
+
+**Why this matters for the business:** This is the feature that turns webhook-hub from a $29/mo monitoring tool into a $99/mo operations platform. Zapier charges per task. We charge per tenant with unlimited automations. The automation engine runs inside the same Worker — no additional infrastructure, no additional latency.
+
+**Resilience:** Actions execute in sequence but a failure in one doesn't stop the chain. Each action result (success/fail) is captured in the workflow result for debugging.
+
+## 29. End-to-end testing against the live URL
 
 **Considered:** Unit tests only (mock D1), integration tests with Miniflare, or full end-to-end tests against the deployed production URL
 **Chose:** Both — 18 unit tests with mock D1 for fast iteration, plus 22 end-to-end tests curled against the live Cloudflare Worker

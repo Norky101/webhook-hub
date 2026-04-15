@@ -66,6 +66,20 @@ CREATE TABLE IF NOT EXISTS remediation_playbooks (
 
 CREATE INDEX IF NOT EXISTS idx_remediation_tenant ON remediation_playbooks(tenant_id);
 
+-- Automation workflows — execute action chains when events match
+CREATE TABLE IF NOT EXISTS automation_workflows (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  trigger_provider TEXT NOT NULL, -- provider name or '*' for all
+  trigger_event_pattern TEXT NOT NULL, -- supports wildcards: 'payment.*'
+  actions TEXT NOT NULL, -- JSON array of {type, name, config} action steps
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_automation_tenant ON automation_workflows(tenant_id, active);
+
 -- Alert rules — metric-based threshold monitoring
 CREATE TABLE IF NOT EXISTS alert_rules (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

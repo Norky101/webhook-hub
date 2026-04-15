@@ -386,6 +386,36 @@ curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/forwarding/tes
 
 ---
 
+### Automation Workflows
+
+Configurable action chains triggered by events. When a webhook matches a workflow, execute a sequence of actions — create tickets, call APIs, send Slack messages.
+
+**`GET /api/automations?tenant_id=X`** — List workflows
+
+**`POST /api/automations`** — Create a workflow
+
+```bash
+# When Stripe payment fails → create Zendesk ticket + Slack #revenue
+curl -X POST https://webhook-hub.noahpilkington98.workers.dev/api/automations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tenant_id":"acme_corp",
+    "name":"Payment failure response",
+    "trigger_provider":"stripe",
+    "trigger_event_pattern":"payment.*",
+    "actions":[
+      {"type":"webhook","name":"Create Zendesk ticket","config":{"url":"https://your-zendesk.com/api/v2/tickets","headers":{"Authorization":"Basic YOUR_TOKEN"},"body":{"ticket":{"subject":"Payment failed: {{summary}}","priority":"high"}}}},
+      {"type":"slack","name":"Alert #revenue","config":{"url":"https://hooks.slack.com/services/xxx","message":"Payment failure for {{summary}} — Zendesk ticket created"}}
+    ]
+  }'
+```
+
+Supports `{{provider}}`, `{{event_type}}`, `{{severity}}`, `{{summary}}`, `{{tenant_id}}`, `{{event_id}}` template variables in action bodies.
+
+**`DELETE /api/automations/:id`** — Delete a workflow
+
+---
+
 ### Alert Rules
 
 Metric-based threshold monitoring. Evaluated every 5 minutes. Alerts flow through all forwarding channels.
@@ -504,6 +534,7 @@ src/
   forwarding.ts     — Webhook forwarding engine (email, Slack, SMS, voice call, webhook URLs)
   health-scores.ts  — Provider health scoring and scheduled digest engine
   remediation.ts    — Remediation playbook matching engine
+  automation.ts     — Automation workflow engine (action chains)
   alerting.ts       — Metric-based alerting rules engine
   correlation.ts    — Cross-tool event correlation engine
   connections.ts    — Connections management page

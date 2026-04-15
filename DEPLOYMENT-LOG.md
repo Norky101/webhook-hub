@@ -197,6 +197,15 @@ Claude Code (CLI) — Claude Opus, max effort. (Upgraded to the $100 subscriptio
 - Documented in DECISIONS.md as decision #28
 - **No commit needed** — tests run against live URL, not code changes
 
+### Session 24 — Automation Workflows Engine (21:10–21:20)
+- Built automation workflow engine: configurable action chains triggered by events
+- Actions: webhook (POST to any API), slack (formatted message), log
+- Template variables in action bodies: {{provider}}, {{event_type}}, {{summary}}, etc.
+- Actions execute in sequence, failure in one doesn't stop the chain
+- CRUD API: GET/POST/DELETE /api/automations
+- automation_workflows D1 table
+- **Commit:** `Phase 25: automation workflows engine`
+
 ---
 
 ## Process Notes
